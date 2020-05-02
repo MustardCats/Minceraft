@@ -2,7 +2,7 @@
 
 Player::Player(Graphics* setgraphics) {
 	graphics = setgraphics;
-	camera = new Camera(graphics->window, graphics->colorProgramID, -3, 0, 0);
+	camera = new Camera(graphics->window, graphics->colorProgramID, 16, 16, 16);
 	
 	debug = false;
 	isJumping = false;
@@ -10,6 +10,7 @@ Player::Player(Graphics* setgraphics) {
 
 	jumpUpgrade = 1;
 	hVelocity = 1.5;
+	vVelocity = 0.0;
 }
 
 Player::~Player() {
@@ -192,7 +193,7 @@ void Player::MoveHorizontal(float deltatime) {
 
 void Player::MoveVertical(float deltatime) {
 	if (!debug) {
-		static float acceleration;
+		static float acceleration = 15.0;
 		// If on ground
 		if (!camera->canmove.ny) {
 			isJumping = false;
@@ -232,7 +233,6 @@ void Player::MoveVertical(float deltatime) {
 					acceleration = 15.0;
 				}
 				isJumping = true;
-
 			}
 		}
 		// Update velocity

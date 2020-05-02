@@ -11,7 +11,7 @@ App::~App() {
 bool App::SetUp() {
 	graphics = new Graphics();
 	graphics->SetUp();
-	stage = new Stage(graphics, 0, 0, 0);
+	stage = new Stage(graphics, 1, 1, 1);
 	player = new Player(graphics);
 	graphics->camera = player->camera;
 	return true;

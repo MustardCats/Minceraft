@@ -7,6 +7,7 @@ Chunk::Chunk(Graphics* setgraphics, int setx, int sety, int setz) {
 	//std::cout << "Making chunk " << x << " " << y << " " << z << "\n";
 	int xfactor, yfactor, zfactor;
 	graphics = setgraphics;
+
 	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
 		blocks.push_back(std::vector<std::vector<Block>>());
 		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
@@ -23,11 +24,25 @@ Chunk::Chunk(Graphics* setgraphics, int setx, int sety, int setz) {
 }
 
 void Chunk::BeginLoading() {
-
+	FastNoise noise;
+	noise.SetNoiseType(FastNoise::Perlin);
+	// default is 0.01
+	noise.SetFrequency(0.02);
+	// Allocate memory for heightmap
+	heightmap = new std::array<std::array<float, 16>, 16>;
+	for (int i = 0; i < 16; i++) {
+		for (int j = 0; j < 16; j++) {
+			heightmap->at(i).at(j) = noise.GetNoise((i + x * misc::chunkSize.x) + 1002, (j + z * misc::chunkSize.z)) * 5;
+		}
+	}
 }
 
-void Chunk::KeepLoading() {
-
+bool Chunk::KeepLoading() {
+	static short bx = 0;
+	static short by = 0;
+	static short bz = 0;
+	// set block coords
+	return true;
 }
 /*
 x - 0.5f, y - 0.5f, z - 0.5f, // forward down left

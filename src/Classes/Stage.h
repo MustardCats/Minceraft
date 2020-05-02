@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iostream>
+#include <chrono>
+
 #include "Chunk.h"
 #include "Graphics.h"
 
