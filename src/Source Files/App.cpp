@@ -11,7 +11,7 @@ App::~App() {
 bool App::SetUp() {
 	graphics = new Graphics();
 	graphics->SetUp();
-	stage = new Stage(graphics, 0, 0, 0);
+	stage = new Stage(graphics, 1, 1, 1);
 	player = new Player(graphics);
 	graphics->camera = player->camera;
 	return true;
@@ -28,8 +28,11 @@ bool App::Start() {
 		static float totaltime = 0;
 		deltatime = duration.count() / 1000.0;
 		totaltime += deltatime;
-		if (totaltime >= 0) {
-			// change title to count
+		count++;
+		if (totaltime >= 1) {
+			std::string title = "FPS: " + std::to_string(count);
+			glfwSetWindowTitle(graphics->window, title.c_str());
+			//std::cout << deltatime << "\n";
 			count = 0;
 			totaltime = 0;
 		}
@@ -47,6 +50,7 @@ bool App::DoFrame(float deltatime) {
 	player->Update(deltatime, stage);
 	graphics->Update(deltatime);
 	stage->Update(player->chunkpos, player->chunkblockpos, deltatime);
+	
 
 	graphics->DrawStaticRect(0, 0, 0.3, 0.3);
 

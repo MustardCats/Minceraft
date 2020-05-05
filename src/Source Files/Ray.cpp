@@ -37,14 +37,57 @@ bool Ray::Step() {
 
 	if (stage->SearchChunks(block, x, y, z, &index) == 1) {
 		if (block.id != 0) {
+			std::cout << "Block Broken was at " << block.x << " " << block.y << " " << block.z <<
+				" and the indices are " << index.bx << " " << index.by << " " << index.bz << "\n";
 			// Reset block data
 			stage->chunks.at(index.c)->blocks.at(index.bx).at(index.by).at(index.bz).id = 0;
 			// Delete buffer data
 			int bufferindex;
 			int uvindex;
-			stage->chunks.at(index.c)->SetVertices();
-			std::cout << "Block index: " << index.bx << " " << index.by << " " << index.bz << "\n";
+			// Erases the block
+			stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by, index.bz);
+			// Update surrounding blocks
 			// x
+			if (index.bx == 0 && stage->chunks.at(index.c)->otherchunks.left != nullptr) {
+				stage->chunks.at(index.c)->otherchunks.left->UpdateBlock(15, index.by, index.bz);
+			}
+			else if (index.bx == 15 && stage->chunks.at(index.c)->otherchunks.right != nullptr) {
+				stage->chunks.at(index.c)->otherchunks.right->UpdateBlock(0, index.by, index.bz);
+			}
+			if (index.bx > 0) {
+				stage->chunks.at(index.c)->UpdateBlock(index.bx - 1, index.by, index.bz);
+			}
+			if (index.bx < 15) {
+				stage->chunks.at(index.c)->UpdateBlock(index.bx + 1, index.by, index.bz);
+			}
+			// y
+			if (index.by == 0 && stage->chunks.at(index.c)->otherchunks.bottom != nullptr) {
+				std::cout << "y" << "\n";
+				stage->chunks.at(index.c)->otherchunks.bottom->UpdateBlock(index.bx, 15, index.bz);
+			}
+			else if (index.by == 15 && stage->chunks.at(index.c)->otherchunks.top != nullptr) {
+				stage->chunks.at(index.c)->otherchunks.top->UpdateBlock(index.bx, 0, index.bz);
+			}
+			if (index.by > 0) {
+				stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by - 1, index.bz);
+			}
+			if (index.by < 15) {
+				stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by + 1, index.bz);
+			}
+			// z
+			if (index.bz == 0 && stage->chunks.at(index.c)->otherchunks.back != nullptr) {
+				stage->chunks.at(index.c)->otherchunks.back->UpdateBlock(index.bx, index.by, 15);
+			}
+			else if (index.bz == 15 && stage->chunks.at(index.c)->otherchunks.forward != nullptr) {
+				stage->chunks.at(index.c)->otherchunks.forward->UpdateBlock(index.bx, index.by, 0);
+			}
+			if (index.bz > 0) {
+				stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by, index.bz - 1);
+			}
+			if (index.bz < 15) {
+				stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by, index.bz + 1);
+			}
+			/*
 			if (x >= 0) {
 				if (x % 16 == 0 && stage->chunks.at(index.c)->otherchunks.left != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.left->SetVertices();
@@ -95,6 +138,7 @@ bool Ray::Step() {
 					stage->chunks.at(index.c)->otherchunks.forward->SetVertices();
 				}
 			}
+			*/
 			/*
 			for (int i = 0; i < stage->chunks.at(index.c)->bufferIndices.size(); i++) {
 				if (stage->chunks.at(index.c)->bufferIndices.at(i).x == index.bx &&
@@ -111,7 +155,6 @@ bool Ray::Step() {
 					//break;
 				}
 			}*/
-			std::cout << "Block breaked at " << block.x << " " << block.y << " " << block.z << "\n";
 			return false;
 		}
 	}

@@ -1,8 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <array>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <chrono>
 
 #include "Block.h"
 #include "../Namespaces/Namespaces.h"
@@ -12,8 +14,12 @@
 class Chunk {
 public:
 	Chunk(Graphics* setgraphics, int setx, int sety, int setz);
-	void SetVertices();
 	~Chunk();
+	void RemoveBlock(int x, int y, int z);
+	bool UpdateBlock(int x, int y, int z, bool loading = false);
+	void BeginLoading();
+	bool KeepLoading();
+	void SetVertices();
 	void Render();
 	void Generate();
 	void MoveX(int distance);
@@ -21,8 +27,11 @@ public:
 	void MoveZ(int distance);
 
 	int x, y, z;
+	// Pointer to window object
 	Graphics* graphics;
+	// Block data that isn't buffer data
 	std::vector<std::vector<std::vector<Block>>> blocks;
+	std::array<std::array<float, 16>, 16>* heightmap;
 private:
 	struct blockBufferIndex {
 	public:
