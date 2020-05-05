@@ -11,28 +11,32 @@ Stage::Stage(Graphics* setgraphics, int chunkx, int chunky, int chunkz) {
 	for (int cx = chunkx - (length / 2); cx <= chunkx + (length / 2); cx++) {
 		for (int cy = chunky - (height / 2); cy <= chunky + (height / 2); cy++) {
 			for (int cz = chunkz - (width / 2); cz <= chunkz + (width / 2); cz++) {
+
+				auto start = std::chrono::high_resolution_clock::now();
+
 				chunks.push_back(new Chunk(graphics, cx, cy, cz));
+				chunks.at(chunks.size() - 1)->Generate();
+
+				auto end = std::chrono::high_resolution_clock::now();
+				auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+				std::cout << "time: " << duration.count() << "\n";
+
+				
 			}
 		}
 	}
 
 	for (int i = 0; i < chunks.size(); i++) {
+		
 		chunks.at(i)->otherchunks.top = FindChunk(chunks.at(i)->x, chunks.at(i)->y + 1, chunks.at(i)->z);
 		chunks.at(i)->otherchunks.bottom = FindChunk(chunks.at(i)->x, chunks.at(i)->y - 1, chunks.at(i)->z);
 		chunks.at(i)->otherchunks.left = FindChunk(chunks.at(i)->x - 1, chunks.at(i)->y, chunks.at(i)->z);
 		chunks.at(i)->otherchunks.right = FindChunk(chunks.at(i)->x + 1, chunks.at(i)->y, chunks.at(i)->z);
 		chunks.at(i)->otherchunks.back = FindChunk(chunks.at(i)->x, chunks.at(i)->y, chunks.at(i)->z - 1);
 		chunks.at(i)->otherchunks.forward = FindChunk(chunks.at(i)->x, chunks.at(i)->y, chunks.at(i)->z + 1);
-		chunks.at(i)->SetVertices();
+		//chunks.at(i)->SetVertices();
+		
 	}
-
-	auto start = std::chrono::high_resolution_clock::now();
-	//MakeChunk(0, 0, 0);
-
-	auto end = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-	std::cout << "time: " << duration.count() << "\n";
 }
 
 Stage::~Stage() {
@@ -73,12 +77,21 @@ bool Stage::Update(misc::tcoord& chunk, misc::tcoord& chunkblock, float deltatim
 	stuff.z = 0;
 
 	//MakeChunks(&chunk);
-
+	static int i = 0;
+	if (i < chunks.size()) {
+		int count = 0;
+		while (!chunks.at(i)->bufferloaded && count < 16) {
+			chunks.at(i)->SetVertices();
+			count++;
+		}
+		i++;
+	}
+	else {
+		i = 0;
+	}
 
 	return true;
 }
-
-
 
 void Stage::MakeChunks(misc::tcoord* chunk) {
 	doing = true;

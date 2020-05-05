@@ -13,6 +13,7 @@
 
 class Chunk {
 public:
+	Chunk();
 	Chunk(Graphics* setgraphics, int setx, int sety, int setz);
 	~Chunk();
 	void RemoveBlock(int x, int y, int z);
@@ -27,6 +28,11 @@ public:
 	void MoveZ(int distance);
 
 	int x, y, z;
+	// These are related to loading vertices
+	bool bufferloaded = false;
+	bool firsttime = true;
+	int cx = 0;
+
 	// Pointer to window object
 	Graphics* graphics;
 	// Block data that isn't buffer data

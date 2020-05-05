@@ -4,9 +4,10 @@ Chunk::Chunk(Graphics* setgraphics, int setx, int sety, int setz) {
 	x = setx;
 	y = sety;
 	z = setz;
-	//std::cout << "Making chunk " << x << " " << y << " " << z << "\n";
+	std::cout << "Making chunk " << x << " " << y << " " << z << "\n";
 	int xfactor, yfactor, zfactor;
 	graphics = setgraphics;
+	bufferloaded = false;
 
 	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
 		blocks.push_back(std::vector<std::vector<Block>>());
@@ -20,7 +21,6 @@ Chunk::Chunk(Graphics* setgraphics, int setx, int sety, int setz) {
 			}
 		}
 	}
-	Generate();
 }
 
 Chunk::~Chunk() {
@@ -406,21 +406,31 @@ x - 0.5f, y + 0.5f, z - 0.5f, // forward up left
 */
 // Initial buffer data creation
 void Chunk::SetVertices() {
-	vertexdata.clear();
-	uvdata.clear();
-	bufferIndices.clear();
-	misc::uvcoords uvcoords[6];
-	// Whether or not buffers will be made
-	bool yes = true;
-	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+	
+	if (firsttime) {
+		cx = 0;
+		vertexdata.clear();
+		uvdata.clear();
+		bufferIndices.clear();
+		firsttime = false;
+	}
+	//std::cout << cx << "\n";
+	if (cx < misc::chunkSize.x) {
+		std::cout << cx << "\n";
 		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
 			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
 				if (blocks.at(cx).at(cy).at(cz).id != 0) {
-					UpdateBlock(cx, cy, cz);
+					UpdateBlock(cx, cy, cz, true);
 				}
 			}
 		}
 	}
+	else {
+		cx = 0;
+		bufferloaded = true;
+		firsttime = true;
+	}
+	cx++;
 }
 
 void Chunk::Render() {
