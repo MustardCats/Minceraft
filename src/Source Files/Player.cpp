@@ -8,7 +8,7 @@ Player::Player(Graphics* setgraphics) {
 	isJumping = false;
 	isRunning = false;
 
-	jumpUpgrade = 1;
+	jumpUpgrade = 0;
 	hVelocity = 1.5;
 	vVelocity = 0.0;
 }
@@ -175,19 +175,37 @@ void Player::MoveHorizontal(float deltatime) {
 	
 	//std::cout << "Velocity: " << hVelocity << "\n";
 	// Actually move
-	if (glfwGetKey(graphics->window, GLFW_KEY_W) == GLFW_PRESS) {
-		camera->MoveForward(deltatime * hVelocity);
+	if (!debug) {
+		if (glfwGetKey(graphics->window, GLFW_KEY_W) == GLFW_PRESS) {
+			camera->MoveForward(deltatime * hVelocity);
+		}
+		// Move backward
+		if (glfwGetKey(graphics->window, GLFW_KEY_S) == GLFW_PRESS) {
+			camera->MoveForward(-deltatime * hVelocity);
+		}
+		if (glfwGetKey(graphics->window, GLFW_KEY_D) == GLFW_PRESS) {
+			camera->MoveSideways(deltatime * 3.0);
+		}
+		// Strafe left
+		if (glfwGetKey(graphics->window, GLFW_KEY_A) == GLFW_PRESS) {
+			camera->MoveSideways(-deltatime * 3.0);
+		}
 	}
-	// Move backward
-	if (glfwGetKey(graphics->window, GLFW_KEY_S) == GLFW_PRESS) {
-		camera->MoveForward(-deltatime * hVelocity);
-	}
-	if (glfwGetKey(graphics->window, GLFW_KEY_D) == GLFW_PRESS) {
-		camera->MoveSideways(deltatime * 3.0);
-	}
-	// Strafe left
-	if (glfwGetKey(graphics->window, GLFW_KEY_A) == GLFW_PRESS) {
-		camera->MoveSideways(-deltatime * 3.0);
+	else {
+		if (glfwGetKey(graphics->window, GLFW_KEY_W) == GLFW_PRESS) {
+			camera->MoveForward(deltatime * 15);
+		}
+		// Move backward
+		if (glfwGetKey(graphics->window, GLFW_KEY_S) == GLFW_PRESS) {
+			camera->MoveForward(-deltatime * 15);
+		}
+		if (glfwGetKey(graphics->window, GLFW_KEY_D) == GLFW_PRESS) {
+			camera->MoveSideways(deltatime * 15);
+		}
+		// Strafe left
+		if (glfwGetKey(graphics->window, GLFW_KEY_A) == GLFW_PRESS) {
+			camera->MoveSideways(-deltatime * 15);
+		}
 	}
 }
 
@@ -243,6 +261,7 @@ void Player::MoveVertical(float deltatime) {
 	}
 	else {
 		if (glfwGetKey(graphics->window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+			std::cout << "fijwsiof\n";
 			camera->MoveVertically(10 * deltatime);
 		}
 		if (glfwGetKey(graphics->window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {

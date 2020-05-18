@@ -19,20 +19,19 @@ bool App::SetUp() {
 
 bool App::Start() {
 	bool success = true;
-	float deltatime = 0;
+	double deltatime = 0;
 	auto start = std::chrono::high_resolution_clock::now();
 	while (DoFrame(deltatime) && success && !glfwWindowShouldClose(graphics->window)) {
 		auto end = std::chrono::high_resolution_clock::now();
-		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 		static int count = 0;
-		static float totaltime = 0;
-		deltatime = duration.count() / 1000.0;
+		static double totaltime = 0;
+		deltatime = duration.count() / 1000000.0;
 		totaltime += deltatime;
 		count++;
-		if (totaltime >= 1) {
+		if (totaltime >= 1.0) {
 			std::string title = "FPS: " + std::to_string(count);
 			glfwSetWindowTitle(graphics->window, title.c_str());
-			//std::cout << deltatime << "\n";
 			count = 0;
 			totaltime = 0;
 		}
@@ -47,36 +46,31 @@ bool App::Start() {
 
 bool App::DoFrame(float deltatime) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	player->Update(deltatime, stage);
-	graphics->Update(deltatime);
-	stage->Update(player->chunkpos, player->chunkblockpos, deltatime);
 	
-
+	if (stage->FindChunk(player->chunkpos.x, player->chunkpos.y, player->chunkpos.z) != nullptr || player->debug)
+		player->Update(deltatime, stage);
+	graphics->Update(deltatime);
+	//stage->Update(player->chunkpos, player->chunkblockpos, deltatime);
 	graphics->DrawStaticRect(0, 0, 0.3, 0.3);
-
-	for (int cx = 0; cx < stage->width; cx++) {
-		for (int cy = 0; cy < stage->height; cy++) {
-			for (int cz = 0; cz < stage->width; cz++) {
-				//graphics->DrawRect(&stage->chunks.at((cx * stage->height * stage->width) + (cy * stage->height) + cz)->vertexdata, &stage->chunks.at((cx * stage->height * stage->width) + (cy * stage->height) + cz)->uvdata);
-			}
-		}
-	} 
+	
+	//stage->chunks.at(0)->InFrontPlayer(player->camera->horizontalAngle, player->camera->verticalAngle, player->camera->position);
 
 	for (int i = 0; i < stage->chunks.size(); i++) {
-		stage->chunks.at(i)->Render();
+		if (stage->chunks.at(i)->vertexdata.size() > 0) {
+			stage->chunks.at(i)->Render();
+		}
+	}
+	//stage->Render();
+	if (stage->chunks.at(0)->InView(player->camera))
+		std::cout << "Chunk in view!\n";
+	else {
+		std::cout << "Chunk not in view!\n";
 	}
 
-	static bool dostuff = true;
-	if (glfwGetKey(graphics->window, GLFW_KEY_C) == GLFW_PRESS && dostuff) {
-		std::cout << "Moving Chunk!\n";
-		stage->chunks.at(0)->MoveZ(5);
-		stage->chunks.at(0)->Generate();
-		stage->chunks.at(0)->SetVertices();
-		dostuff = false;
-	}
 	glfwSwapBuffers(graphics->window);
 	glfwPollEvents();
 	//std::cout << graphics->camera->position[0] << std::endl;
+	
 	return true;
 }
 

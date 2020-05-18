@@ -5,7 +5,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <chrono>
+#include <math.h>
+#include <corecrt_math_defines.h>
 
+#include "Camera.h"
 #include "Block.h"
 #include "../Namespaces/Namespaces.h"
 #include "Graphics.h"
@@ -13,7 +16,6 @@
 
 class Chunk {
 public:
-	Chunk();
 	Chunk(Graphics* setgraphics, int setx, int sety, int setz);
 	~Chunk();
 	void RemoveBlock(int x, int y, int z);
@@ -26,6 +28,7 @@ public:
 	void MoveX(int distance);
 	void MoveY(int distance);
 	void MoveZ(int distance);
+	bool InView(Camera* camera);
 
 	int x, y, z;
 	// These are related to loading vertices
@@ -52,6 +55,9 @@ private:
 		int x, y, z, uvindex, vertexindex;
 	};
 	struct OtherChunks {
+		OtherChunks() {
+			top = bottom = left = right = back = forward = nullptr;
+		}
 		// y+
 		Chunk* top;
 		// y-

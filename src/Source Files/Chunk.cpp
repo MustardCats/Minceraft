@@ -4,28 +4,46 @@ Chunk::Chunk(Graphics* setgraphics, int setx, int sety, int setz) {
 	x = setx;
 	y = sety;
 	z = setz;
-	std::cout << "Making chunk " << x << " " << y << " " << z << "\n";
-	int xfactor, yfactor, zfactor;
+	//std::cout << "Making chunk " << x << " " << y << " " << z << "\n";
+	misc::tcoord factor;
 	graphics = setgraphics;
 	bufferloaded = false;
+	firsttime = true;
 
 	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
 		blocks.push_back(std::vector<std::vector<Block>>());
 		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
 			blocks.at(cx).push_back(std::vector<Block>());
 			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				xfactor = (misc::chunkSize.x * x) + cx;
-				yfactor = (misc::chunkSize.y * y) + cy;
-				zfactor = (misc::chunkSize.z * z) + cz;
-				blocks.at(cx).at(cy).push_back(Block(xfactor, yfactor, zfactor, 1));
+				factor.x = (misc::chunkSize.x * x) + cx;
+				factor.y = (misc::chunkSize.y * y) + cy;
+				factor.z = (misc::chunkSize.z * z) + cz;
+				blocks.at(cx).at(cy).push_back(Block(factor.x, factor.y, factor.z, 1));
 			}
 		}
 	}
+	Generate();
 }
 
 Chunk::~Chunk() {
 	delete[] heightmap;
 }
+
+bool Chunk::InView(Camera* camera) {
+	float cangle;
+	float angle;
+	cangle = fmod(camera->horizontalAngle, M_PI * 2);
+	angle = (atan2((x * 16 + 8) - camera->position[0], (z * 16 + 8) - camera->position[2]));
+	if (angle < 0)
+		angle = (M_PI * 2) - abs(angle);
+	//std::cout << "angle: " << angle << " camera angle: " << cangle << "\n";
+	// If They are in range
+	if (cangle - (M_PI / 2) < angle && cangle + (M_PI / 2) > angle) {
+		return true;
+	}
+	return false;
+}
+
 // Removes block's buffer data
 void Chunk::RemoveBlock(int bx, int by, int bz) {
 	//std::cout << "Target is " << bx << " " << by << " " << bz << " in chunk "
@@ -50,6 +68,8 @@ void Chunk::RemoveBlock(int bx, int by, int bz) {
 }
 // Updates the block's buffer data for whatever reason
 bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
+	// edges of chunk
+	bool edges = true;
 	// Erase all previous data first
 	if (!loading)
 		RemoveBlock(cx, cy, cz);
@@ -88,9 +108,10 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 			yes = false;
 		}
 	}
-	else {
-		//yes = false;
-	}
+	else if (!edges) {
+		yes = false;
+	} 
+
 	if (yes) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
 			vertexdata.size(), uvdata.size()));
@@ -137,8 +158,8 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 			yes = false;
 		}
 	}
-	else {
-		//yes = false;
+	else if (!edges) {
+		yes = false;
 	}
 	if (yes) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
@@ -186,8 +207,8 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 			yes = false;
 		}
 	}
-	else {
-		//yes = false;
+	else if (!edges) {
+		yes = false;
 	}
 	if (yes) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
@@ -235,8 +256,8 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 			yes = false;
 		}
 	}
-	else {
-		//yes = false;
+	else if (!edges) {
+		yes = false;
 	}
 	if (yes) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
@@ -284,8 +305,8 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 			yes = false;
 		}
 	}
-	else {
-		//yes = false;
+	else if (!edges) {
+		yes = false;
 	}
 	if (yes) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
@@ -333,8 +354,8 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 			yes = false;
 		}
 	}
-	else {
-		//yes = false;
+	else if (!edges) {
+		yes = false;
 	}
 	if (yes) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
@@ -394,19 +415,8 @@ bool Chunk::KeepLoading() {
 	// set block coords
 	return true;
 }
-/*
-x - 0.5f, y - 0.5f, z - 0.5f, // forward down left
-x - 0.5f, y - 0.5f, z + 0.5f, // forward down right
-x - 0.5f, y + 0.5f, z + 0.5f, // forward up right
-
-// up front face
-x - 0.5f, y - 0.5f, z - 0.5f, // forward down left
-x - 0.5f, y + 0.5f, z + 0.5f, // forward up right
-x - 0.5f, y + 0.5f, z - 0.5f, // forward up left
-*/
 // Initial buffer data creation
 void Chunk::SetVertices() {
-	
 	if (firsttime) {
 		cx = 0;
 		vertexdata.clear();
@@ -414,14 +424,23 @@ void Chunk::SetVertices() {
 		bufferIndices.clear();
 		firsttime = false;
 	}
-	//std::cout << cx << "\n";
 	if (cx < misc::chunkSize.x) {
-		std::cout << cx << "\n";
 		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
 			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				if (blocks.at(cx).at(cy).at(cz).id != 0) {
-					UpdateBlock(cx, cy, cz, true);
+				try {
+					if (blocks.at(cx).at(cy).at(cz).id != 0) {
+						UpdateBlock(cx, cy, cz, true);
+					}
 				}
+				catch (const std::out_of_range & e) {
+					std::cout << cx << " " << cy << " " << cz << "\n";
+					std::cout << "Chunk: " << x << " " << y << " " << z << "\n";
+					bufferloaded = true;
+					cy = 16;
+					cz = 16;
+					cx = 16;
+				}
+				
 			}
 		}
 	}
@@ -470,7 +489,6 @@ void Chunk::Render() {
 	);
 
 	glDrawArrays(GL_TRIANGLES, 0, vertexdata.size());
-
 	//glDeleteProgram(colorProgramID);
 	glDeleteBuffers(1, &vertexbuffer);
 	glDeleteBuffers(1, &colorbuffer);
@@ -486,7 +504,7 @@ void Chunk::Generate() {
 	float heightmap[16][16];
 	for (int i = 0; i < 16; i++) {
 		for (int j = 0; j < 16; j++) {
-			heightmap[i][j] = noise.GetNoise((i + x * misc::chunkSize.x) + 1002, (j + z * misc::chunkSize.z)) * 5;
+			heightmap[i][j] = noise.GetNoise((i + x * misc::chunkSize.x) + 1002, (j + z * misc::chunkSize.z)) * 5000;
 		}
 	}
 	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
@@ -497,7 +515,7 @@ void Chunk::Generate() {
 				else if (blocks.at(cx).at(cy).at(cz).y < (int)heightmap[cx][cz])
 					blocks.at(cx).at(cy).at(cz).id = 1;
 				else
-					blocks.at(cx).at(cy).at(cz).id = 0;
+					blocks.at(cx).at(cy).at(cz).id = 1;
 			}
 		}
 	}
@@ -535,3 +553,12 @@ void Chunk::MoveZ(int distance) {
 		}
 	}
 }
+/*
+bool Chunk::InFrontPlayer(float ha, float va, glm::vec3& position) {
+	// The angles are in radian, meaning 180 is pi
+	// minimize ha
+	ha = fmod(ha, (atan(1) * 4) * 2);
+	std::cout << ha << " " << va << "\n";
+
+	return false;
+}*/
