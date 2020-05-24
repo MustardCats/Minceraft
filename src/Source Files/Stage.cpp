@@ -2,41 +2,19 @@
 
 Stage::Stage(Graphics* setgraphics, int chunkx, int chunky, int chunkz) {
 	graphics = setgraphics;
-	length = 7;
-	width = 7;
+	length = 10;
+	width = 10;
 	height = 5;
 	id = 0;
 	doing = false;
-	// Create chunks
-	for (int cx = chunkx - (length / 2); cx <= chunkx + (length / 2); cx++) {
-		for (int cy = chunky - (height / 2); cy <= chunky + (height / 2); cy++) {
-			for (int cz = chunkz - (width / 2); cz <= chunkz + (width / 2); cz++) {
-
-				auto start = std::chrono::high_resolution_clock::now();
-
-				chunks.push_back(new Chunk(graphics, cx, cy, cz));
-				chunks.at(chunks.size() - 1)->Generate();
-
-				auto end = std::chrono::high_resolution_clock::now();
-				auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-				std::cout << "time: " << duration.count() << "\n";
-
-				
-			}
-		}
-	}
-
-	for (int i = 0; i < chunks.size(); i++) {
-		
-		chunks.at(i)->otherchunks.top = FindChunk(chunks.at(i)->x, chunks.at(i)->y + 1, chunks.at(i)->z);
-		chunks.at(i)->otherchunks.bottom = FindChunk(chunks.at(i)->x, chunks.at(i)->y - 1, chunks.at(i)->z);
-		chunks.at(i)->otherchunks.left = FindChunk(chunks.at(i)->x - 1, chunks.at(i)->y, chunks.at(i)->z);
-		chunks.at(i)->otherchunks.right = FindChunk(chunks.at(i)->x + 1, chunks.at(i)->y, chunks.at(i)->z);
-		chunks.at(i)->otherchunks.back = FindChunk(chunks.at(i)->x, chunks.at(i)->y, chunks.at(i)->z - 1);
-		chunks.at(i)->otherchunks.forward = FindChunk(chunks.at(i)->x, chunks.at(i)->y, chunks.at(i)->z + 1);
-		//chunks.at(i)->SetVertices();
-		
-	}
+	/*
+	chunks.push_back(new Chunk(graphics, 1, 1, 1));
+	for (int i = 0; i < 16; i++)
+		chunks.at(0)->SetVertices();
+	chunks.push_back(new Chunk(graphics, 4, 1, 1));
+	for (int i = 0; i < 16; i++)
+		chunks.at(1)->SetVertices();
+	*/
 }
 
 Stage::~Stage() {
@@ -71,128 +49,164 @@ void Stage::MakeChunk(int x, int y, int z) {
 }
 
 bool Stage::Update(misc::tcoord& chunk, misc::tcoord& chunkblock, float deltatime) {
+	// temp
+	static bool once = true;
+
 	misc::tcoord stuff;
 	stuff.x = 0;
 	stuff.y = 0;
 	stuff.z = 0;
 
-	//MakeChunks(&chunk);
-	static int i = 0;
-	if (i < chunks.size()) {
-		int count = 0;
-		while (!chunks.at(i)->bufferloaded && count < 16) {
-			chunks.at(i)->SetVertices();
-			count++;
+	int bx, by, bz;
+	bool exit = false;
+	bx = chunk.x - (length / 2);
+	by = chunk.y - (height / 2);
+	bz = chunk.z - (width / 2);
+	// Check nearby chunks (manual for now)
+	if (true) {
+		if (FindChunk(bx + 1, by, bz) == nullptr) {
+			exit = true;
+			bx++;
 		}
-		i++;
+		else if (FindChunk(bx - 1, by, bz) == nullptr) {
+			exit = true;
+			bx--;
+		}
+		else if (FindChunk(bx, by + 1, bz) == nullptr) {
+			exit = true;
+			by++;
+		}
+		else if (FindChunk(bx, by - 1, bz) == nullptr) {
+			exit = true;
+			by--;
+		}
+		else if (FindChunk(bx, by, bz + 1) == nullptr) {
+			exit = true;
+			bz++;
+		}
+		else if (FindChunk(bx, by, bz - 1) == nullptr) {
+			exit = true;
+			bz--;
+		}
 	}
-	else {
-		i = 0;
+	// Do other chunks
+	while (bx < chunk.x + (length / 2) && !exit) {
+		by = chunk.y - (height / 2);
+		while (by < chunk.y + (height / 2)) {
+			bz = chunk.z - (width / 2);
+			while (bz < chunk.z + (width / 2)) {
+				if (FindChunk(bx, by, bz) == nullptr) {
+					exit = true;
+					break;
+				}
+				bz++;
+			}
+			if (exit)
+				break;
+			by++;
+		}
+		if (exit)
+			break;
+		bx++;
+	}
+	if (exit && once) {
+		//once = false;
+		chunks.push_back(new Chunk(graphics, bx, by, bz));
+		SetChunkPointers(chunks.at(chunks.size() - 1));
+		SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.back);
+		SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.bottom);
+		SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.forward);
+		SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.left);
+		SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.right);
+		SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.top);
+		// Start updating nearby chunks so there are no invisible spots
+		if (chunks.at(chunks.size() - 1)->otherchunks.back != nullptr) {
+			chunks.at(chunks.size() - 1)->otherchunks.back->firsttime = true;
+			chunks.at(chunks.size() - 1)->otherchunks.back->bufferloaded = false;
+		}
+		if (chunks.at(chunks.size() - 1)->otherchunks.bottom != nullptr) {
+			chunks.at(chunks.size() - 1)->otherchunks.bottom->firsttime = true;
+			chunks.at(chunks.size() - 1)->otherchunks.bottom->bufferloaded = false;
+		}
+		if (chunks.at(chunks.size() - 1)->otherchunks.left != nullptr) {
+			chunks.at(chunks.size() - 1)->otherchunks.left->firsttime = true;
+			chunks.at(chunks.size() - 1)->otherchunks.left->bufferloaded = false;
+		}
+		if (chunks.at(chunks.size() - 1)->otherchunks.right != nullptr) {
+			chunks.at(chunks.size() - 1)->otherchunks.right->firsttime = true;
+			chunks.at(chunks.size() - 1)->otherchunks.right->bufferloaded = false;
+		}
+		if (chunks.at(chunks.size() - 1)->otherchunks.forward != nullptr) {
+			chunks.at(chunks.size() - 1)->otherchunks.forward->firsttime = true;
+			chunks.at(chunks.size() - 1)->otherchunks.forward->bufferloaded = false;
+		}
+		if (chunks.at(chunks.size() - 1)->otherchunks.top != nullptr) {
+			chunks.at(chunks.size() - 1)->otherchunks.top->firsttime = true;
+			chunks.at(chunks.size() - 1)->otherchunks.top->bufferloaded = false;
+		}
+	}
+	else if (once) {
+		//once = false;
+		static int i = 0;
+		if (i < chunks.size()) {
+			int count = 0;
+			while (!chunks.at(i)->bufferloaded && count < 16 &&
+				!((chunks.at(i)->x < chunk.x - (length / 2) ||
+				chunks.at(i)->x > chunk.x + (length / 2) ||
+				chunks.at(i)->y < chunk.y - (height / 2) ||
+				chunks.at(i)->y > chunk.y + (height / 2) ||
+				chunks.at(i)->z < chunk.z - (width / 2) ||
+				chunks.at(i)->z > chunk.z + (width / 2)))) {
+				chunks.at(i)->SetVertices();
+				count++;
+			}
+			i++;
+		}
+		else {
+			i = 0;
+			// Delete unneeded chunks
+			for (int j = 0; j < chunks.size(); j++) {
+				if (chunks.at(j) != nullptr) {
+					if (chunks.at(j)->x < chunk.x - (length / 2) ||
+						chunks.at(j)->x > chunk.x + (length / 2) ||
+						chunks.at(j)->y < chunk.y - (height / 2) ||
+						chunks.at(j)->y > chunk.y + (height / 2) ||
+						chunks.at(j)->z < chunk.z - (width / 2) ||
+						chunks.at(j)->z > chunk.z + (width / 2)) {
+						delete chunks.at(j);
+						chunks.erase(chunks.begin() + j);
+					}
+				}
+			}
+		}
+	}
+	// Delete nullptrs
+	for (int i = 0; i < chunks.size(); i++) {
+		if (chunks.at(i) == nullptr)
+			chunks.erase(chunks.begin() + i);
 	}
 
 	return true;
 }
 
 void Stage::MakeChunks(misc::tcoord* chunk) {
-	doing = true;
-	prevchunk = *chunk;
-	if (passivegen) {
-		cx = chunk->x - (length / 2);
-		cy = chunk->y - (height / 2);
-		cz = chunk->z - (width / 2);
-		// If passivegen is just starting again
-		cx = chunk->x - (length / 2);
-		cy = chunk->y - (height / 2);
-		cz = chunk->z - (width / 2);
-		// Check whether a chunk is nullptr
-		bool exit = false;
-		
-		while (FindChunk(cx, cy, cz) != nullptr && !exit) {
-			if (cx < chunk->x + (length / 2))
-				cx++;
-			else {
-				cx = chunk->x - (length / 2);
-				if (cy < chunk->y + (height / 2))
-					cy++;
-				else {
-					cy = chunk->y - (height / 2);
-					if (cz < chunk->z + (width / 2))
-						cz++;
-					else {
-						exit = true;
-						break;
-					}
-				}
-			}
-		}
-
-
-
-
-		// Make new chunk
-		if (FindChunk(chunk->x, chunk->y, chunk->z) == nullptr) {
-			chunks.push_back(new Chunk(graphics, chunk->x, chunk->y, chunk->z));
-			SetChunkPointers(chunks.at(chunks.size() - 1), true);
-		}
-		if (FindChunk(cx, cy, cz) == nullptr && !exit) {
-			//std::cout << "Creating chunk at " << cx << " " << cy << " " << cz << "\n";
-			
-
-			chunks.push_back(new Chunk(graphics, cx, cy, cz));
-			
-			SetChunkPointers(chunks.at(chunks.size() - 1), true);
-			
-			
-			// update other chunks
-			if (chunks.at(chunks.size() - 1)->otherchunks.top != nullptr) {
-				SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.top, true);
-			}
-			if (chunks.at(chunks.size() - 1)->otherchunks.bottom != nullptr) {
-				SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.bottom, true);
-			}
-			if (chunks.at(chunks.size() - 1)->otherchunks.back != nullptr) {
-				SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.back, true);
-			}
-			if (chunks.at(chunks.size() - 1)->otherchunks.forward != nullptr) {
-				SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.forward, true);
-			}
-			if (chunks.at(chunks.size() - 1)->otherchunks.left != nullptr) {
-				SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.left, true);
-			}
-			if (chunks.at(chunks.size() - 1)->otherchunks.right != nullptr) {
-				SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.right, true);
-			}
-		}
-		// Delete chunks
-		misc::tcoord distance;
-		for (int i = 0; i < chunks.size(); i++) {
-			distance.x = abs(chunk->x - chunks.at(i)->x);
-			distance.y = abs(chunk->y - chunks.at(i)->y);
-			distance.z = abs(chunk->z - chunks.at(i)->z);
-
-			if (distance.x > length || distance.y > height || distance.z > width) {
-				std::cout << "delete\n";
-				delete chunks.at(i);
-				chunks.erase(chunks.begin() + i);
-			}
-		}
-	}
-	else {
-		activegen = true;
-	}
-	doing = false;
+	
 }
 
 void Stage::SetChunkPointers(Chunk* chunk, bool isgenerate) {
-	chunk->otherchunks.top = FindChunk(chunk->x, chunk->y + 1, chunk->z);
-	chunk->otherchunks.bottom = FindChunk(chunk->x, chunk->y - 1, chunk->z);
-	chunk->otherchunks.left = FindChunk(chunk->x - 1, chunk->y, chunk->z);
-	chunk->otherchunks.right = FindChunk(chunk->x + 1, chunk->y, chunk->z);
-	chunk->otherchunks.back = FindChunk(chunk->x, chunk->y, chunk->z - 1);
-	chunk->otherchunks.forward = FindChunk(chunk->x, chunk->y, chunk->z + 1);
-	if (isgenerate)
-		chunk->SetVertices();
+	if (chunk != nullptr) {
+		chunk->otherchunks.top = FindChunk(chunk->x, chunk->y + 1, chunk->z);
+		chunk->otherchunks.bottom = FindChunk(chunk->x, chunk->y - 1, chunk->z);
+		chunk->otherchunks.left = FindChunk(chunk->x - 1, chunk->y, chunk->z);
+		chunk->otherchunks.right = FindChunk(chunk->x + 1, chunk->y, chunk->z);
+		chunk->otherchunks.back = FindChunk(chunk->x, chunk->y, chunk->z - 1);
+		chunk->otherchunks.forward = FindChunk(chunk->x, chunk->y, chunk->z + 1);
+		if (isgenerate)
+			chunk->SetVertices();
+	}
 }
+
+
 
 Chunk* Stage::FindChunk(int x, int y, int z) {
 	int index;
@@ -202,6 +216,59 @@ Chunk* Stage::FindChunk(int x, int y, int z) {
 		}
 	}
 	return nullptr;
+}
+
+void Stage::Render() {
+	std::vector<GLfloat> totalvertex;
+	std::vector<GLfloat> totaluv;
+
+	for (int i = 0; i < chunks.size(); i++) {
+		totalvertex.insert(totalvertex.end(), chunks.at(i)->vertexdata.begin(), chunks.at(i)->vertexdata.end());
+		totaluv.insert(totaluv.end(), chunks.at(i)->uvdata.begin(), chunks.at(i)->uvdata.end());
+	}
+
+	glUseProgram(graphics->colorProgramID);
+
+	GLuint vertexbuffer;
+	GLuint colorbuffer;
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, graphics->sheet1->texture);
+	glUniform1i(graphics->sheet1->TextureID, 0);
+
+	glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * totalvertex.size(), totalvertex.data(), GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(
+		0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
+		3,                  // size
+		GL_FLOAT,           // type
+		GL_FALSE,           // normalized?
+		0,                  // stride
+		(void*)0            // array buffer offset
+	);
+
+	glGenBuffers(1, &colorbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * totaluv.size(), totaluv.data(), GL_STATIC_DRAW);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(
+		1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+		2,                                // size
+		GL_FLOAT,                         // type
+		GL_FALSE,                         // normalized?
+		0,                                // stride
+		(void*)0                          // array buffer offset
+	);
+
+	glDrawArrays(GL_TRIANGLES, 0, totalvertex.size());
+
+	//glDeleteProgram(colorProgramID);
+	glDeleteBuffers(1, &vertexbuffer);
+	glDeleteBuffers(1, &colorbuffer);
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
 }
 
 int Stage::SearchChunks(Block& block, int tx, int ty, int tz, misc::chunkindex* index) {

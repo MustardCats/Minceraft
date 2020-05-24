@@ -27,21 +27,19 @@ public:
 
 	GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
 
-	GLuint loadBMP_custom(const char* imagepath);
-
 	GLuint loadDDS(const char* imagepath);
 
 	GLFWwindow* window;
 	GLuint colorProgramID;
 	GLuint staticProgramId;
+	// pointer to play camera
 	Camera* camera;
+	// end result of camera matrices and vectors
 	glm::mat4 MVP;
+	// the matrix ID
 	GLuint matrixID;
 
 	GLuint VertexArrayID;
-
 	TextureAtlas* sheet1;
-
-
 	int SCREENWIDTH, SCREENHEIGHT;
 };

@@ -6,6 +6,7 @@
 
 #include "Chunk.h"
 #include "Graphics.h"
+#include "Camera.h"
 
 class Stage {
 public:
@@ -19,6 +20,8 @@ public:
 	void SetChunkPointers(Chunk* chunk, bool isgenerate = false);
 
 	Chunk* FindChunk(int x, int y, int z);
+
+	void Render();
 
 	int SearchChunks(Block& block, int tx, int ty, int tz, misc::chunkindex* index);
 

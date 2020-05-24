@@ -48,9 +48,9 @@ bool Camera::Update(float deltatime) {
 
 	// Right vector
 	glm::vec3 right = glm::vec3(
-		sin(horizontalAngle - 3.14f / 2.0f),
+		sin(horizontalAngle - 3.1415f / 2.0f),
 		0,
-		cos(horizontalAngle - 3.14f / 2.0f)
+		cos(horizontalAngle - 3.1415f / 2.0f)
 	);
 
 	// Up vector
@@ -71,9 +71,9 @@ bool Camera::Update(float deltatime) {
 // I made this myself!!!
 void Camera::MoveSideways(float distance) {
 	glm::vec3 right = glm::vec3(
-		sin(horizontalAngle - 3.14f / 2.0f),
+		sin(horizontalAngle - 3.1415f / 2.0f),
 		0,
-		cos(horizontalAngle - 3.14f / 2.0f)
+		cos(horizontalAngle - 3.1415f / 2.0f)
 	);
 	// If the camera can't move a certain direction, multiply the distance with
 	// the appropriate vector result and make it zero if needed
@@ -87,9 +87,9 @@ void Camera::MoveSideways(float distance) {
 
 void Camera::MoveForward(float distance) {
 	glm::vec3 forward = glm::vec3(
-		-cos(horizontalAngle + 3.14f / 2.0f),
+		-cos(horizontalAngle + 3.1415f / 2.0f),
 		0,
-		-sin(horizontalAngle - 3.14f / 2.0f)
+		-sin(horizontalAngle - 3.1415f / 2.0f)
 		//cos(verticalAngle) * sin(horizontalAngle),
 		//sin(verticalAngle),
 		//cos(verticalAngle) * cos(horizontalAngle)

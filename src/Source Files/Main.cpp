@@ -8,6 +8,6 @@ int main(int* argcp, char** argv) {
 	else if (!app->Start()) {
 		return -1;
 	}
-
-	return 0;
+	else
+		return 0;
 }

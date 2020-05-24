@@ -18,7 +18,7 @@ public:
 	bool SetUp();
 	bool Start();
 	bool DoFrame(float deltatime);
-	void End();
+	bool End();
 
 	Graphics* graphics;
 	Stage* stage;

@@ -17,7 +17,7 @@ void TextureAtlas::loadFromImage(const sf::Image& i) {
 
 void TextureAtlas::LoadPNG(const std::string& file) {
 	sf::Image i;
-	if (!i.loadFromFile(file)) {
+	if (!i.loadFromFile(file) && false) {
 		throw std::runtime_error("Unable to load BasicTexture: " + file);
 	}
 	width = i.getSize().x;

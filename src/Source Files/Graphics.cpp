@@ -5,8 +5,6 @@ Graphics::Graphics() {
 	SCREENHEIGHT = 768;
 	window = nullptr;
 	colorProgramID = 0;
-	
-	std::cout << "graphics setup\n";
 }
 
 Graphics::~Graphics() {
