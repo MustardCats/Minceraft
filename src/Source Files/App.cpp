@@ -50,22 +50,25 @@ bool App::DoFrame(float deltatime) {
 	if (stage->FindChunk(player->chunkpos.x, player->chunkpos.y, player->chunkpos.z) != nullptr || player->debug)
 		player->Update(deltatime, stage);
 	graphics->Update(deltatime);
-	stage->Update(player->chunkpos, player->chunkblockpos, deltatime);
+	//stage->Update(player->chunkpos, player->chunkblockpos, deltatime);
+	stage->MakeChunks(player->chunkpos, player->chunkblockpos);
+	//std::thread thread(&Stage::MakeChunks, stage, player->chunkpos, player->chunkblockpos);
 	graphics->DrawStaticRect(0, 0, 0.1, 0.1);
 	
 	//stage->chunks.at(0)->InFrontPlayer(player->camera->horizontalAngle, player->camera->verticalAngle, player->camera->position);
-
-	for (int i = 0; i < stage->chunks.size(); i++) {
-		if (stage->chunks.at(i)->vertexdata.size() > 0) {
-			if (stage->chunks.at(i)->InView(player->camera) ||
-				stage->chunks.at(i) == player->chunk ||
-				stage->chunks.at(i) == player->chunk->otherchunks.back || 
-				stage->chunks.at(i) == player->chunk->otherchunks.forward ||
-				stage->chunks.at(i) == player->chunk->otherchunks.left ||
-				stage->chunks.at(i) == player->chunk->otherchunks.right ||
-				(stage->chunks.at(i)->x == player->chunk->x &&
-				stage->chunks.at(i)->z == player->chunk->z))
-				stage->chunks.at(i)->Render();
+	if (player->chunk != nullptr) {
+		for (int i = 0; i < stage->chunks.size(); i++) {
+			if (stage->chunks.at(i)->vertexdata.size() > 0) {
+				if (stage->chunks.at(i)->InView(player->camera) ||
+					stage->chunks.at(i) == player->chunk ||
+					stage->chunks.at(i) == player->chunk->otherchunks.back ||
+					stage->chunks.at(i) == player->chunk->otherchunks.forward ||
+					stage->chunks.at(i) == player->chunk->otherchunks.left ||
+					stage->chunks.at(i) == player->chunk->otherchunks.right ||
+					(stage->chunks.at(i)->x == player->chunk->x &&
+						stage->chunks.at(i)->z == player->chunk->z))
+					stage->chunks.at(i)->Render();
+			}
 		}
 	}
 

@@ -21,33 +21,6 @@ Stage::~Stage() {
 
 }
 
-void Stage::MakeChunk(int x, int y, int z) {
-	chunks.push_back(new Chunk(graphics, x, y, z));
-	chunks.at(chunks.size() - 1)->Generate();
-	SetChunkPointers(chunks.at(chunks.size() - 1));
-	chunks.at(chunks.size() - 1)->SetVertices();
-	// Update surrounding chunks' pointers
-	SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.top);
-	SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.bottom);
-	SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.back);
-	SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.forward);
-	SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.left);
-	SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.right);
-	// Set the new vertices
-	if (chunks.at(chunks.size() - 1)->otherchunks.top != nullptr)
-		chunks.at(chunks.size() - 1)->otherchunks.top->SetVertices();
-	if (chunks.at(chunks.size() - 1)->otherchunks.bottom != nullptr)
-		chunks.at(chunks.size() - 1)->otherchunks.bottom->SetVertices();
-	if (chunks.at(chunks.size() - 1)->otherchunks.left != nullptr)
-		chunks.at(chunks.size() - 1)->otherchunks.left->SetVertices();
-	if (chunks.at(chunks.size() - 1)->otherchunks.right != nullptr)
-		chunks.at(chunks.size() - 1)->otherchunks.right->SetVertices();
-	if (chunks.at(chunks.size() - 1)->otherchunks.back != nullptr)
-		chunks.at(chunks.size() - 1)->otherchunks.back->SetVertices();
-	if (chunks.at(chunks.size() - 1)->otherchunks.forward != nullptr)
-		chunks.at(chunks.size() - 1)->otherchunks.forward->SetVertices();
-}
-
 bool Stage::Update(misc::tcoord& chunk, misc::tcoord& chunkblock, float deltatime) {
 	// temp
 	static bool once = true;
@@ -189,8 +162,111 @@ bool Stage::Update(misc::tcoord& chunk, misc::tcoord& chunkblock, float deltatim
 	return true;
 }
 
-void Stage::MakeChunks(misc::tcoord* chunk) {
-	
+void Stage::MakeChunks(misc::tcoord chunk, misc::tcoord chunkblock) {
+	// alternates between making chunks and making meshes
+	static bool alternate = false;
+	// Find nullptrs
+	if (!alternate) {
+		std::vector<misc::tcoord> nullptrs;
+		for (int cx = (chunk.x - (length / 2)); cx < (chunk.x + (length / 2)); cx++) {
+			for (int cy = (chunk.y - (height / 2)); cy < (chunk.y + (height / 2)); cy++) {
+				for (int cz = (chunk.z - (width / 2)); cz < (chunk.z + (width / 2)); cz++) {
+					if (FindChunk(cx, cy, cz) == nullptr) {
+						nullptrs.push_back(misc::tcoord(cx, cy, cz));
+					}
+				}
+			}
+		}
+		// Find closest to chunk
+		if (nullptrs.size() != 0) {
+			misc::tcoord closest = misc::FindClosest(&chunk, nullptrs.data(), nullptrs.size());
+			// Make it
+			chunks.push_back(new Chunk(graphics, closest.x, closest.y, closest.z));
+			//std::cout << "Making chunk at " << closest.x << " " << closest.y << " " << closest.z << "\n";
+			SetChunkPointers(chunks.at(chunks.size() - 1));
+			SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.back);
+			SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.bottom);
+			SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.forward);
+			SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.left);
+			SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.right);
+			SetChunkPointers(chunks.at(chunks.size() - 1)->otherchunks.top);
+			// Reset mesh bool so it reloads
+			if (chunks.at(chunks.size() - 1)->otherchunks.top != nullptr)
+				chunks.at(chunks.size() - 1)->otherchunks.top->bufferloaded = false;
+			if (chunks.at(chunks.size() - 1)->otherchunks.bottom != nullptr)
+				chunks.at(chunks.size() - 1)->otherchunks.bottom->bufferloaded = false;
+			if (chunks.at(chunks.size() - 1)->otherchunks.right != nullptr)
+				chunks.at(chunks.size() - 1)->otherchunks.right->bufferloaded = false;
+			if (chunks.at(chunks.size() - 1)->otherchunks.left != nullptr)
+				chunks.at(chunks.size() - 1)->otherchunks.left->bufferloaded = false;
+			if (chunks.at(chunks.size() - 1)->otherchunks.forward != nullptr)
+				chunks.at(chunks.size() - 1)->otherchunks.forward->bufferloaded = false;
+			if (chunks.at(chunks.size() - 1)->otherchunks.back != nullptr)
+				chunks.at(chunks.size() - 1)->otherchunks.back->bufferloaded = false;
+		}
+	}
+	// Load mesh
+	else {
+		std::vector<misc::tcoord> mesh_ids;
+		for (int i = 0; i < chunks.size(); i++) {
+			if (!chunks.at(i)->bufferloaded)
+				mesh_ids.push_back(misc::tcoord(chunks.at(i)->x, chunks.at(i)->y, chunks.at(i)->z));
+		}
+		if (mesh_ids.size() != 0) {
+			misc::tcoord onetomesh; // target mesh
+			onetomesh = misc::FindClosest(&chunk, mesh_ids.data(), mesh_ids.size());
+			Chunk* meshchunk = FindChunk(onetomesh.x, onetomesh.y, onetomesh.z);
+			//std::cout << "Making mesh at " << meshchunk->x
+			//	<< " " << meshchunk->y
+			//	<< " " << meshchunk->z << "\n";
+			int count = 0;
+			while (!meshchunk->bufferloaded && count < 16 &&
+				!((meshchunk->x < chunk.x - (length / 2) ||
+					meshchunk->x > chunk.x + (length / 2) ||
+					meshchunk->y < chunk.y - (height / 2) ||
+					meshchunk->y > chunk.y + (height / 2) ||
+					meshchunk->z < chunk.z - (width / 2) ||
+					meshchunk->z > chunk.z + (width / 2)))) {
+				meshchunk->SetVertices();
+				count++;
+			}
+		}
+	}
+	// Delete far chunks
+	for (int j = 0; j < chunks.size(); j++) {
+		if (chunks.at(j) != nullptr) {
+			if (chunks.at(j)->x < chunk.x - (length / 2) ||
+				chunks.at(j)->x > chunk.x + (length / 2) ||
+				chunks.at(j)->y < chunk.y - (height / 2) ||
+				chunks.at(j)->y > chunk.y + (height / 2) ||
+				chunks.at(j)->z < chunk.z - (width / 2) ||
+				chunks.at(j)->z > chunk.z + (width / 2)) {
+				// reset pointers
+				// This code may have solved the weird crashes and exceptions
+				// in the setvertices function
+				if (chunks.at(j)->otherchunks.back != nullptr)
+					chunks.at(j)->otherchunks.back->otherchunks.forward = nullptr;
+				if (chunks.at(j)->otherchunks.forward != nullptr)
+					chunks.at(j)->otherchunks.forward->otherchunks.back = nullptr;
+				if (chunks.at(j)->otherchunks.right != nullptr)
+					chunks.at(j)->otherchunks.right->otherchunks.left = nullptr;
+				if (chunks.at(j)->otherchunks.left != nullptr)
+					chunks.at(j)->otherchunks.left->otherchunks.right = nullptr;
+				if (chunks.at(j)->otherchunks.bottom != nullptr)
+					chunks.at(j)->otherchunks.bottom->otherchunks.top = nullptr;
+				if (chunks.at(j)->otherchunks.top != nullptr)
+					chunks.at(j)->otherchunks.top->otherchunks.bottom = nullptr;
+				// delete
+				delete chunks.at(j);
+				chunks.erase(chunks.begin() + j);
+			}
+		}
+	}
+	// change alternate
+	if (alternate)
+		alternate = false;
+	else
+		alternate = true;
 }
 
 void Stage::SetChunkPointers(Chunk* chunk, bool isgenerate) {

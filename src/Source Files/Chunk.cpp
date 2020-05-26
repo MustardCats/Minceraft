@@ -59,8 +59,7 @@ bool Chunk::InView(Camera* camera) {
 
 // Removes block's buffer data
 void Chunk::RemoveBlock(int bx, int by, int bz) {
-	//std::cout << "Target is " << bx << " " << by << " " << bz << " in chunk "
-	//	<< x << " " << y << " " << z << "\n";
+	//std::cout << "start\n";
 	for (int i = 0; i < bufferIndices.size(); i++) {
 		if (bufferIndices.at(i).x == bx &&
 			bufferIndices.at(i).y == by &&
@@ -78,6 +77,7 @@ void Chunk::RemoveBlock(int bx, int by, int bz) {
 			i = 0;
 		}
 	}
+	//std::cout << "end\n";
 }
 // Updates the block's buffer data for whatever reason
 bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
@@ -453,7 +453,6 @@ void Chunk::SetVertices() {
 					cz = 16;
 					cx = 16;
 				}
-				
 			}
 		}
 	}

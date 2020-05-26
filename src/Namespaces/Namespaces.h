@@ -3,6 +3,9 @@
 #ifndef MISC
 #define MISC
 
+#include <cmath>
+#include <math.h>
+
 namespace misc {
 	struct floatcoord {
 		float x, y;
@@ -46,8 +49,23 @@ namespace misc {
 	struct chunkindex {
 		int c, bx, by, bz;
 	};
-
+	
 	static const tcoord chunkSize(16, 16, 16);
+	
+	static tcoord FindClosest(tcoord* target, tcoord potentials[], int size) {
+		float distance, newdistance;
+		int index = { 0 };
+		distance = sqrt(pow(target->x - potentials[0].x, 2) + pow(target->y - potentials[0].y, 2) + pow(target->z - potentials[0].z, 2));
+		for (int i = 0; i < size; i++) {
+			newdistance = sqrt(pow(target->x - potentials[i].x, 2) + pow(target->y - potentials[i].y, 2) + pow(target->z - potentials[i].z, 2));
+			if (newdistance < distance) {
+				distance = newdistance;
+				index = i;
+			}
+		}
+
+		return potentials[index];
+	}
 };
 
 #endif
