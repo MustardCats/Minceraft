@@ -25,9 +25,6 @@ public:
 	short length, width, height;
 	std::vector<Chunk*> chunks;
 
-	// Annoying static variables I had to place here
-	// because the whiny std::thread would error
-	// "invoke" shit
 	misc::tcoord prevchunk;
 	// When the player isn't moving. More widespread.
 	bool passivegen = true;

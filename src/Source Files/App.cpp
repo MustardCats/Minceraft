@@ -5,7 +5,9 @@ App::App() {
 }
 
 App::~App() {
-
+	delete stage;
+	delete player;
+	delete graphics;
 }
 
 bool App::SetUp() {
@@ -21,7 +23,9 @@ bool App::Start() {
 	bool success = true;
 	double deltatime = 0;
 	auto start = std::chrono::high_resolution_clock::now();
-	while (DoFrame(deltatime) && success && !glfwWindowShouldClose(graphics->window)) {
+	static short framecount = 1;
+	while (success || !glfwWindowShouldClose(graphics->window)) {
+		success = DoFrame(deltatime, framecount);
 		auto end = std::chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
 		static int count = 0;
@@ -29,49 +33,46 @@ bool App::Start() {
 		deltatime = duration.count() / 1000000.0;
 		totaltime += deltatime;
 		count++;
+		framecount++;
 		if (totaltime >= 1.0) {
 			std::string title = "FPS: " + std::to_string(count);
 			glfwSetWindowTitle(graphics->window, title.c_str());
 			count = 0;
 			totaltime = 0;
 		}
+		if (framecount >= 360) {
+			framecount = 1;
+		}
 		start = std::chrono::high_resolution_clock::now();
 	}
-	if (success) {
-		 success = End();
-	}
+	success = End();
 
 	return success;
 }
 
-bool App::DoFrame(float deltatime) {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+bool App::DoFrame(float deltatime, short framecount) {
 	if (stage->FindChunk(player->chunkpos.x, player->chunkpos.y, player->chunkpos.z) != nullptr || player->debug)
 		player->Update(deltatime, stage);
 	graphics->Update(deltatime);
 	//stage->Update(player->chunkpos, player->chunkblockpos, deltatime);
-	stage->MakeChunks(player->chunkpos, player->chunkblockpos);
+	if (framecount % 3 == 0) {
+		//std::thread cat(&Stage::MakeChunks, stage, player->chunkpos, player->chunkblockpos);
+		//cat.join();
+		stage->MakeChunks(player->chunkpos, player->chunkblockpos);
+	}
 	//std::thread thread(&Stage::MakeChunks, stage, player->chunkpos, player->chunkblockpos);
 	graphics->DrawStaticRect(0, 0, 0.1, 0.1);
-	
 	//stage->chunks.at(0)->InFrontPlayer(player->camera->horizontalAngle, player->camera->verticalAngle, player->camera->position);
-	if (player->chunk != nullptr) {
+	if (player->chunk != nullptr || true) {
 		for (int i = 0; i < stage->chunks.size(); i++) {
 			if (stage->chunks.at(i)->vertexdata.size() > 0) {
-				if (stage->chunks.at(i)->InView(player->camera) ||
-					stage->chunks.at(i) == player->chunk ||
-					stage->chunks.at(i) == player->chunk->otherchunks.back ||
-					stage->chunks.at(i) == player->chunk->otherchunks.forward ||
-					stage->chunks.at(i) == player->chunk->otherchunks.left ||
-					stage->chunks.at(i) == player->chunk->otherchunks.right ||
-					(stage->chunks.at(i)->x == player->chunk->x &&
-						stage->chunks.at(i)->z == player->chunk->z))
+				//if (stage->chunks.at(i)->InView(player->camera)) {
 					stage->chunks.at(i)->Render();
+				//}
 			}
 		}
 	}
-
+	
 	glfwSwapBuffers(graphics->window);
 	glfwPollEvents();
 	//std::cout << graphics->camera->position[0] << std::endl;

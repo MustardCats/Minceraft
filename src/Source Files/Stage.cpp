@@ -2,23 +2,25 @@
 
 Stage::Stage(Graphics* setgraphics, int chunkx, int chunky, int chunkz) {
 	graphics = setgraphics;
-	length = 10;
-	width = 10;
+	length = 21;
+	width = 21;
 	height = 5;
 	id = 0;
 	doing = false;
-	/*
+	
 	chunks.push_back(new Chunk(graphics, 1, 1, 1));
 	for (int i = 0; i < 16; i++)
 		chunks.at(0)->SetVertices();
-	chunks.push_back(new Chunk(graphics, 4, 1, 1));
-	for (int i = 0; i < 16; i++)
-		chunks.at(1)->SetVertices();
-	*/
+	//chunks.push_back(new Chunk(graphics, 4, 1, 1));
+	//for (int i = 0; i < 16; i++)
+	//	chunks.at(1)->SetVertices();
+	
 }
 
 Stage::~Stage() {
-
+	for (int i = 0; i < chunks.size(); i++) {
+		delete chunks.at(i);
+	}
 }
 
 bool Stage::Update(misc::tcoord& chunk, misc::tcoord& chunkblock, float deltatime) {
@@ -163,6 +165,7 @@ bool Stage::Update(misc::tcoord& chunk, misc::tcoord& chunkblock, float deltatim
 }
 
 void Stage::MakeChunks(misc::tcoord chunk, misc::tcoord chunkblock) {
+	doing = true;
 	// alternates between making chunks and making meshes
 	static bool alternate = false;
 	// Find nullptrs
@@ -267,6 +270,7 @@ void Stage::MakeChunks(misc::tcoord chunk, misc::tcoord chunkblock) {
 		alternate = false;
 	else
 		alternate = true;
+	doing = false;
 }
 
 void Stage::SetChunkPointers(Chunk* chunk, bool isgenerate) {

@@ -15,6 +15,8 @@
 #include "Camera.h"
 #include "TextureAtlas.h"
 
+enum Rendermode {TEXTURE, SHAPE};
+
 class Graphics {
 public:
 	Graphics();
@@ -32,6 +34,9 @@ public:
 	GLFWwindow* window;
 	GLuint colorProgramID;
 	GLuint staticProgramId;
+
+	GLuint vertexbuffer;
+	GLuint colorbuffer;
 	// pointer to play camera
 	Camera* camera;
 	// end result of camera matrices and vectors
@@ -42,4 +47,6 @@ public:
 	GLuint VertexArrayID;
 	TextureAtlas* sheet1;
 	int SCREENWIDTH, SCREENHEIGHT;
+	// Current rendering mode
+	Rendermode rendermode;
 };

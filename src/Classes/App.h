@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <thread>
 
 #include "../Classes/Graphics.h"
 #include "../Classes/Chunk.h"
@@ -17,7 +18,7 @@ public:
 
 	bool SetUp();
 	bool Start();
-	bool DoFrame(float deltatime);
+	bool DoFrame(float deltatime, short framecount);
 	bool End();
 
 	Graphics* graphics;

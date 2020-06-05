@@ -1,4 +1,5 @@
 #include "../Classes/App.h"
+#include "../External Stuff/FastNoise.h"
 
 int main(int* argcp, char** argv) {
 	App* app = new App();

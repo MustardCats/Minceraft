@@ -19,7 +19,7 @@ namespace misc {
 			y = sy;
 			z = sz;
 		}
-		bool operator!= (tcoord& other) {
+		bool operator== (tcoord& other) {
 			if (x != other.x || y != other.y || z != other.z)
 				return false;
 			else

@@ -9,16 +9,16 @@ Chunk::Chunk(Graphics* setgraphics, int setx, int sety, int setz) {
 	graphics = setgraphics;
 	bufferloaded = false;
 	firsttime = true;
-
+	
 	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
-		blocks.push_back(std::vector<std::vector<Block>>());
+		//blocks.push_back(std::vector<std::vector<Block>>());
 		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
-			blocks.at(cx).push_back(std::vector<Block>());
+			//blocks.at(cx).push_back(std::vector<Block>());
 			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
 				factor.x = (misc::chunkSize.x * x) + cx;
 				factor.y = (misc::chunkSize.y * y) + cy;
 				factor.z = (misc::chunkSize.z * z) + cz;
-				blocks.at(cx).at(cy).push_back(Block(factor.x, factor.y, factor.z, 1));
+				blocks.at(cx).at(cy).at(cz) = Block(factor.x, factor.y, factor.z, 1);
 			}
 		}
 	}
@@ -26,10 +26,11 @@ Chunk::Chunk(Graphics* setgraphics, int setx, int sety, int setz) {
 }
 
 Chunk::~Chunk() {
-	delete[] heightmap;
+	
 }
 
 bool Chunk::InView(Camera* camera) {
+	/*
 	// Horizontal
 	float hcangle;
 	float hangle;
@@ -52,6 +53,31 @@ bool Chunk::InView(Camera* camera) {
 		((hcangle - (M_PI * 2)) - (M_PI / 1.5) < hangle && (hcangle - (M_PI * 2)) + (M_PI / 1.5) > hangle)) &&
 		camera->verticalAngle - (M_PI / 2) < vangle &&
 		camera->verticalAngle + (M_PI / 2) > vangle) {
+		return true;
+	}
+	return false;
+	*/
+	float distanceToPlayer; // distance between player and chunk
+	float pointToPoint; // distance between the camera's point and chunk
+	glm::vec3 cameraPoint; // made from camera angle + distanceToPlayer
+	// distance vector
+	glm::vec3 direction = glm::vec3(
+		cos(camera->verticalAngle) * sin(camera->horizontalAngle),
+		sin(camera->verticalAngle),
+		cos(camera->verticalAngle) * cos(camera->horizontalAngle)
+	);
+
+	distanceToPlayer = sqrt(pow(((x * 16) + 8 - camera->position[0]), 2) + pow(((y * 16) + 8 - camera->position[1]), 2) + pow(((z * 16) + 8 - camera->position[2]), 2));
+
+	cameraPoint = camera->position + (direction * distanceToPlayer);
+
+	pointToPoint = sqrt(pow(((x * 16) + 8 - cameraPoint[0]), 2) + pow(((y * 16) + 8 - cameraPoint[1]), 2) + pow(((z * 16) + 8 - cameraPoint[2]), 2));
+
+	//std::cout << "Distance: " << distanceToPlayer << " Point to Point: " << pointToPoint << "\n";
+	//std::cout << "Point: " << cameraPoint[0] << " " << cameraPoint[1] << " " << cameraPoint[2] <<
+	//	" Chunk Middle: " << (x * 16) + 8 << " " << (y * 16) + 8 << " " << (z * 16) + 8 << "\n";
+
+	if (pointToPoint < 40) {
 		return true;
 	}
 	return false;
@@ -101,12 +127,20 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		uvcoords[5] = graphics->sheet1->GetUvCoords(0, 0);
 		break;
 	case 2:
-		uvcoords[0] = graphics->sheet1->GetUvCoords(0, 1);
-		uvcoords[1] = graphics->sheet1->GetUvCoords(0, 1);
+		uvcoords[0] = graphics->sheet1->GetUvCoords(1, 0);
+		uvcoords[1] = graphics->sheet1->GetUvCoords(1, 0);
 		uvcoords[2] = graphics->sheet1->GetUvCoords(0, 0);
-		uvcoords[3] = graphics->sheet1->GetUvCoords(1, 0);
-		uvcoords[4] = graphics->sheet1->GetUvCoords(0, 1);
-		uvcoords[5] = graphics->sheet1->GetUvCoords(0, 1);
+		uvcoords[3] = graphics->sheet1->GetUvCoords(4, 0);
+		uvcoords[4] = graphics->sheet1->GetUvCoords(1, 0);
+		uvcoords[5] = graphics->sheet1->GetUvCoords(1, 0);
+		break;
+	case 3:
+		uvcoords[0] = graphics->sheet1->GetUvCoords(7, 0);
+		uvcoords[1] = graphics->sheet1->GetUvCoords(7, 0);
+		uvcoords[2] = graphics->sheet1->GetUvCoords(7, 0);
+		uvcoords[3] = graphics->sheet1->GetUvCoords(7, 0);
+		uvcoords[4] = graphics->sheet1->GetUvCoords(7, 0);
+		uvcoords[5] = graphics->sheet1->GetUvCoords(7, 0);
 		break;
 	}
 	// GOOD GOOD
@@ -406,29 +440,7 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 	}
 	return true;
 }
-// I don't want to even bother doing dynamic loading until much, much later
-void Chunk::BeginLoading() {
-	FastNoise noise;
-	noise.SetNoiseType(FastNoise::Perlin);
-	// default is 0.01
-	noise.SetFrequency(0.02);
-	// Allocate memory for heightmap
-	heightmap = new std::array<std::array<float, 16>, 16>;
-	for (int i = 0; i < 16; i++) {
-		for (int j = 0; j < 16; j++) {
-			heightmap->at(i).at(j) = noise.GetNoise((i + x * misc::chunkSize.x) + 1002, (j + z * misc::chunkSize.z)) * 5;
-		}
-	}
-}
 
-bool Chunk::KeepLoading() {
-	static short bx = 0;
-	static short by = 0;
-	static short bz = 0;
-	// set block coords
-	return true;
-}
-// Initial buffer data creation
 void Chunk::SetVertices() {
 	if (firsttime) {
 		cx = 0;
@@ -465,17 +477,21 @@ void Chunk::SetVertices() {
 }
 
 void Chunk::Render() {
-	glUseProgram(graphics->colorProgramID);
+	// Only use after rendering with a different program
+	if (graphics->rendermode == SHAPE) {
+		glUseProgram(graphics->colorProgramID);
+		graphics->rendermode = TEXTURE;
+		glActiveTexture(GL_TEXTURE0);
+		glUniform1i(graphics->sheet1->TextureID, 0);
+	}
 
-	GLuint vertexbuffer;
-	GLuint colorbuffer;
+	
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, graphics->sheet1->texture);
-	glUniform1i(graphics->sheet1->TextureID, 0);
+	
+	//glBindTexture(GL_TEXTURE_2D, graphics->sheet1->texture);
+	
 
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, graphics->vertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertexdata.size(), vertexdata.data(), GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(
@@ -487,8 +503,7 @@ void Chunk::Render() {
 		(void*)0            // array buffer offset
 	);
 
-	glGenBuffers(1, &colorbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, graphics->colorbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * uvdata.size(), uvdata.data(), GL_STATIC_DRAW);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(
@@ -502,13 +517,14 @@ void Chunk::Render() {
 
 	glDrawArrays(GL_TRIANGLES, 0, vertexdata.size());
 	//glDeleteProgram(colorProgramID);
-	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteBuffers(1, &colorbuffer);
+	//glDeleteBuffers(1, &graphics->vertexbuffer);
+	//glDeleteBuffers(1, &graphics->colorbuffer);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
 }
 
 void Chunk::Generate() {
+	// surface noise
 	FastNoise noise;
 	noise.SetNoiseType(FastNoise::Perlin);
 	// default is 0.01
@@ -516,61 +532,42 @@ void Chunk::Generate() {
 	float heightmap[16][16];
 	for (int i = 0; i < 16; i++) {
 		for (int j = 0; j < 16; j++) {
-			heightmap[i][j] = noise.GetNoise((i + x * misc::chunkSize.x), (j + z * misc::chunkSize.z)) * 50;
+			heightmap[i][j] = noise.GetNoise((i + x * misc::chunkSize.x), (j + z * misc::chunkSize.z)) * 5;
 		}
+	}
+	// cave noise
+	noise.SetFrequency(0.05);
+	noise.SetNoiseType(FastNoise::Simplex);
+	int cavemap[16][16][16];
+	for (int bx = 0; bx < 16; bx++) {
+		for (int by = 0; by < 16; by++) {
+			for (int bz = 0; bz < 16; bz++) {
+				cavemap[bx][by][bz] = (int)(noise.GetNoise((bx + x * misc::chunkSize.x),
+					(by + y * misc::chunkSize.y),
+					(bz + z * misc::chunkSize.z)) * 2);
+				//std::cout << cavemap[bx][by][bz] << " ";
+			}
+			//std::cout << "\n";
+		}
+		//std::cout << "\n";
 	}
 	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
 		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
 			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				if (blocks.at(cx).at(cy).at(cz).y == (int)heightmap[cx][cz])
-					blocks.at(cx).at(cy).at(cz).id = 2;
-				else if (blocks.at(cx).at(cy).at(cz).y < (int)heightmap[cx][cz])
-					blocks.at(cx).at(cy).at(cz).id = 1;
-				else
+				if (cavemap[cx][cy][cz] < 0) {
 					blocks.at(cx).at(cy).at(cz).id = 0;
+				}
+				else {
+					if (blocks.at(cx).at(cy).at(cz).y == (int)heightmap[cx][cz])
+						blocks.at(cx).at(cy).at(cz).id = 2;
+					else if (blocks.at(cx).at(cy).at(cz).y < (int)heightmap[cx][cz] - 4)
+						blocks.at(cx).at(cy).at(cz).id = 3;
+					else if (blocks.at(cx).at(cy).at(cz).y < (int)heightmap[cx][cz])
+						blocks.at(cx).at(cy).at(cz).id = 1;
+					else
+						blocks.at(cx).at(cy).at(cz).id = 0;
+				}
 			}
 		}
 	}
 }
-
-void Chunk::MoveX(int distance) {
-	x += distance;
-	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
-		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
-			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				blocks.at(cx).at(cy).at(cz).x += misc::chunkSize.x * distance;
-			}
-		}
-	}
-}
-
-void Chunk::MoveY(int distance) {
-	y += distance;
-	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
-		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
-			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				blocks.at(cx).at(cy).at(cz).y += misc::chunkSize.y * distance;
-			}
-		}
-	}
-}
-
-void Chunk::MoveZ(int distance) {
-	z += distance;
-	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
-		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
-			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				blocks.at(cx).at(cy).at(cz).z += misc::chunkSize.z * distance;
-			}
-		}
-	}
-}
-/*
-bool Chunk::InFrontPlayer(float ha, float va, glm::vec3& position) {
-	// The angles are in radian, meaning 180 is pi
-	// minimize ha
-	ha = fmod(ha, (atan(1) * 4) * 2);
-	std::cout << ha << " " << va << "\n";
-
-	return false;
-}*/

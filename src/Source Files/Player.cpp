@@ -4,7 +4,7 @@ Player::Player(Graphics* setgraphics) {
 	graphics = setgraphics;
 	camera = new Camera(graphics->window, graphics->colorProgramID, 16, 16, 16);
 	
-	debug = 0;
+	debug = 1;
 	isJumping = false;
 	isRunning = false;
 
@@ -70,7 +70,7 @@ bool Player::Update(float deltatime, Stage* stage) {
 	if (true) {
 		static bool press = true;
 		if (glfwGetMouseButton(graphics->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && press) {
-			Ray ray(stage, camera->position, camera->horizontalAngle, camera->verticalAngle, 10);
+			Ray ray(stage, camera->position, camera->horizontalAngle, camera->verticalAngle, 150);
 			press = false;
 		}
 		else if (!glfwGetMouseButton(graphics->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)

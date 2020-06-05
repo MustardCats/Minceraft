@@ -28,6 +28,8 @@ bool Graphics::Update(float deltatime) {
 	camera->Update(deltatime);
 	MVP = camera->ProjectionMatrix * camera->ViewMatrix;
 	glUniformMatrix4fv(matrixID, 1, GL_FALSE, &MVP[0][0]);
+	// Clear screen
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	return true;
 }
@@ -131,18 +133,26 @@ bool Graphics::SetUp() {
 
 	gluPerspective(60 * (float)SCREENWIDTH / SCREENHEIGHT, (float)SCREENWIDTH / SCREENHEIGHT, 0.01f, 100.0f);
 
-	//glUseProgram(colorProgramID);
+	glUseProgram(colorProgramID);
 
 	matrixID = glGetUniformLocation(colorProgramID, "MVP");
 
-	sheet1 = new TextureAtlas("textures/cat.png", 32);
+	sheet1 = new TextureAtlas("textures/image.png", 8);
 	sheet1->TextureID = glGetUniformLocation(colorProgramID, "myTextureSampler");
+
+	glGenBuffers(1, &vertexbuffer);
+	glGenBuffers(1, &colorbuffer);
+
+	rendermode = TEXTURE;
 
 	return true;
 }
 
 void Graphics::DrawStaticRect(float x, float y, float w, float h) {
-	glUseProgram(staticProgramId);
+	if (rendermode == TEXTURE) {
+		glUseProgram(staticProgramId);
+		rendermode = SHAPE;
+	}
 
 	const GLfloat vertexdata[]{
 		x, y, 0.0f,

@@ -18,29 +18,24 @@ class Chunk {
 public:
 	Chunk(Graphics* setgraphics, int setx, int sety, int setz);
 	~Chunk();
-	void RemoveBlock(int x, int y, int z);
-	bool UpdateBlock(int x, int y, int z, bool loading = false);
-	void BeginLoading();
-	bool KeepLoading();
-	void SetVertices();
-	void Render();
-	void Generate();
-	void MoveX(int distance);
-	void MoveY(int distance);
-	void MoveZ(int distance);
-	bool InView(Camera* camera);
+	void RemoveBlock(int x, int y, int z); // Deletes block mesh
+	bool UpdateBlock(int x, int y, int z, bool loading = false); // Updates block mesh (or makes it)
+	void SetVertices(); // Makes chunk mesh
+	void Render(); // Duh
+	void Generate(); // Makes the block data
+	bool InView(Camera* camera); // Compares the chunk position with the camera view
 
 	int x, y, z;
 	// These are related to loading vertices
 	bool bufferloaded = false;
 	bool firsttime = true;
 	int cx = 0;
-
 	// Pointer to window object
 	Graphics* graphics;
 	// Block data that isn't buffer data
-	std::vector<std::vector<std::vector<Block>>> blocks;
-	std::array<std::array<float, 16>, 16>* heightmap;
+	std::array<std::array<std::array<Block, 16>, 16>, 16> blocks{};
+	std::vector<GLfloat> vertexdata;
+	std::vector<GLfloat> uvdata;
 private:
 	struct blockBufferIndex {
 	public:
@@ -51,7 +46,6 @@ private:
 			vertexindex = setvertexindex;
 			uvindex = setuvindex;
 		}
-
 		int x, y, z, uvindex, vertexindex;
 	};
 	struct OtherChunks {
@@ -75,6 +69,4 @@ public:
 	OtherChunks otherchunks;
 	// Stores indices for vertex and uv buffer data for each block
 	std::vector<blockBufferIndex> bufferIndices;
-	std::vector<GLfloat> vertexdata;
-	std::vector<GLfloat> uvdata;
 };
