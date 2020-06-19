@@ -24,7 +24,7 @@ bool App::Start() {
 	double deltatime = 0;
 	auto start = std::chrono::high_resolution_clock::now();
 	static short framecount = 1;
-	while (success || !glfwWindowShouldClose(graphics->window)) {
+	while (success && !glfwWindowShouldClose(graphics->window)) {
 		success = DoFrame(deltatime, framecount);
 		auto end = std::chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);

@@ -99,305 +99,308 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 	// Erase all previous data first
 	if (!loading)
 		RemoveBlock(cx, cy, cz);
-	std::array<misc::uvcoords, 6> uvcoords;
-	// Replace data
-	uvcoords = graphics->sheet1->GetBlockCoords(blocks.at(cx).at(cy).at(cz).id);
-	// GOOD GOOD
-	bool yes = true;
-	if (cx != 0) {
-		if (blocks.at(cx - 1).at(cy).at(cz).id != 0) {
+	if (blocks.at(cx).at(cy).at(cz).id != 0) {
+		std::array<misc::uvcoords, 6> uvcoords;
+		// Replace data
+		uvcoords = graphics->sheet1->GetBlockCoords(blocks.at(cx).at(cy).at(cz).id);
+		// GOOD GOOD
+		bool yes = true;
+		if (cx != 0) {
+			if (blocks.at(cx - 1).at(cy).at(cz).id != 0) {
+				yes = false;
+			}
+		}
+		else if (otherchunks.left != nullptr) {
+			if (otherchunks.left->blocks.at((chunksize - 1)).at(cy).at(cz).id != 0) {
+				yes = false;
+			}
+		}
+		else if (!edges) {
 			yes = false;
 		}
-	}
-	else if (otherchunks.left != nullptr) {
-		if (otherchunks.left->blocks.at((chunksize - 1)).at(cy).at(cz).id != 0) {
+
+		if (yes) {
+			bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
+				vertexdata.size(), uvdata.size()));
+
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			uvdata.insert(uvdata.end(), {
+				// forward
+				uvcoords[0].dl.x, uvcoords[0].dl.y,
+				uvcoords[0].dr.x, uvcoords[0].dr.y,
+				uvcoords[0].ur.x, uvcoords[0].ur.y,
+
+				uvcoords[0].dl.x, uvcoords[0].dl.y,
+				uvcoords[0].ur.x, uvcoords[0].ur.y,
+				uvcoords[0].ul.x, uvcoords[0].ul.y,
+				});
+		}
+		// GOOD GOOD
+		yes = true;
+		if (cx != (chunksize - 1)) {
+			if (blocks.at(cx + 1).at(cy).at(cz).id != 0) {
+				yes = false;
+			}
+		}
+		else if (otherchunks.right != nullptr) {
+			if (otherchunks.right->blocks.at(0).at(cy).at(cz).id != 0) {
+				yes = false;
+			}
+		}
+		else if (!edges) {
 			yes = false;
 		}
-	}
-	else if (!edges) {
-		yes = false;
-	} 
+		if (yes) {
+			bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
+				vertexdata.size(), uvdata.size()));
 
-	if (yes) {
-		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
-			vertexdata.size(), uvdata.size()));
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		uvdata.insert(uvdata.end(), {
-			// forward
-			uvcoords[0].dl.x, uvcoords[0].dl.y,
-			uvcoords[0].dr.x, uvcoords[0].dr.y,
-			uvcoords[0].ur.x, uvcoords[0].ur.y,
+			uvdata.insert(uvdata.end(), {
+				uvcoords[1].dl.x, uvcoords[1].dl.y,
+				uvcoords[1].dr.x, uvcoords[1].dr.y,
+				uvcoords[1].ur.x, uvcoords[1].ur.y,
 
-			uvcoords[0].dl.x, uvcoords[0].dl.y,
-			uvcoords[0].ur.x, uvcoords[0].ur.y,
-			uvcoords[0].ul.x, uvcoords[0].ul.y,
-			});
-	}
-	// GOOD GOOD
-	yes = true;
-	if (cx != (chunksize - 1)) {
-		if (blocks.at(cx + 1).at(cy).at(cz).id != 0) {
+				uvcoords[1].ul.x, uvcoords[1].ul.y,
+				uvcoords[1].dl.x, uvcoords[1].dl.y,
+				uvcoords[1].ur.x, uvcoords[1].ur.y,
+				});
+		}
+		// GOOD GOOD
+		yes = true;
+		if (cy != 0) {
+			if (blocks.at(cx).at(cy - 1).at(cz).id != 0) {
+				yes = false;
+			}
+		}
+		else if (otherchunks.bottom != nullptr) {
+			if (otherchunks.bottom->blocks.at(cx).at((chunksize - 1)).at(cz).id != 0) {
+				yes = false;
+			}
+		}
+		else if (!edges) {
 			yes = false;
 		}
-	}
-	else if (otherchunks.right != nullptr) {
-		if (otherchunks.right->blocks.at(0).at(cy).at(cz).id != 0) {
+		if (yes) {
+			bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
+				vertexdata.size(), uvdata.size()));
+
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+
+			uvdata.insert(uvdata.end(), {
+				uvcoords[2].ul.x, uvcoords[2].ul.y,
+				uvcoords[2].ur.x, uvcoords[2].ur.y,
+				uvcoords[2].dl.x, uvcoords[2].dl.y,
+
+				uvcoords[2].ur.x, uvcoords[2].ur.y,
+				uvcoords[2].dr.x, uvcoords[2].dr.y,
+				uvcoords[2].dl.x, uvcoords[2].dl.y,
+				});
+		}
+		// GOOD GOOD
+		yes = true;
+		if (cy != (chunksize - 1)) {
+			if (blocks.at(cx).at(cy + 1).at(cz).id != 0) {
+				yes = false;
+			}
+		}
+		else if (otherchunks.top != nullptr) {
+			if (otherchunks.top->blocks.at(cx).at(0).at(cz).id != 0) {
+				yes = false;
+			}
+		}
+		else if (!edges) {
 			yes = false;
 		}
-	}
-	else if (!edges) {
-		yes = false;
-	}
-	if (yes) {
-		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
-			vertexdata.size(), uvdata.size()));
+		if (yes) {
+			bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
+				vertexdata.size(), uvdata.size()));
 
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
-		uvdata.insert(uvdata.end(), {
-			uvcoords[1].dl.x, uvcoords[1].dl.y,
-			uvcoords[1].dr.x, uvcoords[1].dr.y,
-			uvcoords[1].ur.x, uvcoords[1].ur.y,
+			uvdata.insert(uvdata.end(), {
+				uvcoords[3].ul.x, uvcoords[3].ul.y,
+				uvcoords[3].dl.x, uvcoords[3].dl.y,
+				uvcoords[3].ur.x, uvcoords[3].ur.y,
 
-			uvcoords[1].ul.x, uvcoords[1].ul.y,
-			uvcoords[1].dl.x, uvcoords[1].dl.y,
-			uvcoords[1].ur.x, uvcoords[1].ur.y,
-			});
-	}
-	// GOOD GOOD
-	yes = true;
-	if (cy != 0) {
-		if (blocks.at(cx).at(cy - 1).at(cz).id != 0) {
+				uvcoords[3].dl.x, uvcoords[3].dl.y,
+				uvcoords[3].dr.x, uvcoords[3].dr.y,
+				uvcoords[3].ur.x, uvcoords[3].ur.y,
+				});
+		}
+		// GOOD
+		yes = true;
+		if (cz != 0) {
+			if (blocks.at(cx).at(cy).at(cz - 1).id != 0) {
+				yes = false;
+			}
+		}
+		else if (otherchunks.back != nullptr) {
+			if (otherchunks.back->blocks.at(cx).at(cy).at((chunksize - 1)).id != 0) {
+				yes = false;
+			}
+		}
+		else if (!edges) {
 			yes = false;
 		}
-	}
-	else if (otherchunks.bottom != nullptr) {
-		if (otherchunks.bottom->blocks.at(cx).at((chunksize - 1)).at(cz).id != 0) {
+		if (yes) {
+			bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
+				vertexdata.size(), uvdata.size()));
+
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+
+			uvdata.insert(uvdata.end(), {
+				uvcoords[4].dl.x, uvcoords[4].dl.y,
+				uvcoords[4].dr.x, uvcoords[4].dr.y,
+				uvcoords[4].ur.x, uvcoords[4].ur.y,
+
+				uvcoords[4].ur.x, uvcoords[4].ur.y,
+				uvcoords[4].ul.x, uvcoords[4].ul.y,
+				uvcoords[4].dl.x, uvcoords[4].dl.y,
+				});
+		}
+
+		yes = true;
+		if (cz != (chunksize - 1)) {
+			if (blocks.at(cx).at(cy).at(cz + 1).id != 0) {
+				yes = false;
+			}
+		}
+		else if (otherchunks.forward != nullptr) {
+			if (otherchunks.forward->blocks.at(cx).at(cy).at(0).id != 0) {
+				yes = false;
+			}
+		}
+		else if (!edges) {
 			yes = false;
 		}
-	}
-	else if (!edges) {
-		yes = false;
-	}
-	if (yes) {
-		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
-			vertexdata.size(), uvdata.size()));
+		if (yes) {
+			bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
+				vertexdata.size(), uvdata.size()));
 
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+			vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+			vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+			vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
-		uvdata.insert(uvdata.end(), {
-			uvcoords[2].ul.x, uvcoords[2].ul.y,
-			uvcoords[2].ur.x, uvcoords[2].ur.y,
-			uvcoords[2].dl.x, uvcoords[2].dl.y,
+			uvdata.insert(uvdata.end(), {
+				uvcoords[5].dl.x, uvcoords[5].dl.y,
+				uvcoords[5].dr.x, uvcoords[5].dr.y,
+				uvcoords[5].ur.x, uvcoords[5].ur.y,
 
-			uvcoords[2].ur.x, uvcoords[2].ur.y,
-			uvcoords[2].dr.x, uvcoords[2].dr.y,
-			uvcoords[2].dl.x, uvcoords[2].dl.y,
-			});
-	}
-	// GOOD GOOD
-	yes = true;
-	if (cy != (chunksize - 1)) {
-		if (blocks.at(cx).at(cy + 1).at(cz).id != 0) {
-			yes = false;
+				uvcoords[5].ul.x, uvcoords[5].ul.y,
+				uvcoords[5].dl.x, uvcoords[5].dl.y,
+				uvcoords[5].ur.x, uvcoords[5].ur.y,
+				});
 		}
+		return true;
 	}
-	else if (otherchunks.top != nullptr) {
-		if (otherchunks.top->blocks.at(cx).at(0).at(cz).id != 0) {
-			yes = false;
-		}
-	}
-	else if (!edges) {
-		yes = false;
-	}
-	if (yes) {
-		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
-			vertexdata.size(), uvdata.size()));
-
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-
-		uvdata.insert(uvdata.end(), {
-			uvcoords[3].ul.x, uvcoords[3].ul.y,
-			uvcoords[3].dl.x, uvcoords[3].dl.y,
-			uvcoords[3].ur.x, uvcoords[3].ur.y,
-
-			uvcoords[3].dl.x, uvcoords[3].dl.y,
-			uvcoords[3].dr.x, uvcoords[3].dr.y,
-			uvcoords[3].ur.x, uvcoords[3].ur.y,
-			});
-	}
-	// GOOD
-	yes = true;
-	if (cz != 0) {
-		if (blocks.at(cx).at(cy).at(cz - 1).id != 0) {
-			yes = false;
-		}
-	}
-	else if (otherchunks.back != nullptr) {
-		if (otherchunks.back->blocks.at(cx).at(cy).at((chunksize - 1)).id != 0) {
-			yes = false;
-		}
-	}
-	else if (!edges) {
-		yes = false;
-	}
-	if (yes) {
-		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
-			vertexdata.size(), uvdata.size()));
-
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
-
-		uvdata.insert(uvdata.end(), {
-			uvcoords[4].dl.x, uvcoords[4].dl.y,
-			uvcoords[4].dr.x, uvcoords[4].dr.y,
-			uvcoords[4].ur.x, uvcoords[4].ur.y,
-
-			uvcoords[4].ur.x, uvcoords[4].ur.y,
-			uvcoords[4].ul.x, uvcoords[4].ul.y,
-			uvcoords[4].dl.x, uvcoords[4].dl.y,
-			});
-	}
-
-	yes = true;
-	if (cz != (chunksize - 1)) {
-		if (blocks.at(cx).at(cy).at(cz + 1).id != 0) {
-			yes = false;
-		}
-	}
-	else if (otherchunks.forward != nullptr) {
-		if (otherchunks.forward->blocks.at(cx).at(cy).at(0).id != 0) {
-			yes = false;
-		}
-	}
-	else if (!edges) {
-		yes = false;
-	}
-	if (yes) {
-		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
-			vertexdata.size(), uvdata.size()));
-
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
-		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
-		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
-
-		uvdata.insert(uvdata.end(), {
-			uvcoords[5].dl.x, uvcoords[5].dl.y,
-			uvcoords[5].dr.x, uvcoords[5].dr.y,
-			uvcoords[5].ur.x, uvcoords[5].ur.y,
-
-			uvcoords[5].ul.x, uvcoords[5].ul.y,
-			uvcoords[5].dl.x, uvcoords[5].dl.y,
-			uvcoords[5].ur.x, uvcoords[5].ur.y,
-			});
-	}
-	return true;
+	return false;
 }
 
 void Chunk::SetVertices(int number) {

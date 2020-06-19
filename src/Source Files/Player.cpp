@@ -4,7 +4,7 @@ Player::Player(Graphics* setgraphics) {
 	graphics = setgraphics;
 	camera = new Camera(graphics->window, graphics->colorProgramID, 16, 16, 16);
 	
-	debug = 1;
+	debug = 0;
 	isJumping = false;
 	isRunning = false;
 
