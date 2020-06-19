@@ -1,0 +1,7 @@
+Controls:
+WASD to move
+Space to jump
+F to toggle debug mode
+Escape to free the mouse from window
+E to return the mouse to window
+Left click to break
