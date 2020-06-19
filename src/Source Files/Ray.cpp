@@ -37,7 +37,7 @@ bool Ray::Step() {
 
 	if (stage->SearchChunks(block, x, y, z, &index) == 1) {
 		if (block.id != 0) {
-			std::cout << "Block Broken was at " << block.x << " " << block.y << " " << block.z <<
+			std::cout << "Block Broken was at " << x << " " << y << " " << z <<
 				" and the indices are " << index.bx << " " << index.by << " " << index.bz << "\n";
 			// Reset block data
 			stage->chunks.at(index.c)->blocks.at(index.bx).at(index.by).at(index.bz).id = 0;
@@ -49,42 +49,42 @@ bool Ray::Step() {
 			// Update surrounding blocks
 			// x
 			if (index.bx == 0 && stage->chunks.at(index.c)->otherchunks.left != nullptr) {
-				stage->chunks.at(index.c)->otherchunks.left->UpdateBlock(15, index.by, index.bz);
+				stage->chunks.at(index.c)->otherchunks.left->UpdateBlock((chunksize - 1), index.by, index.bz);
 			}
-			else if (index.bx == 15 && stage->chunks.at(index.c)->otherchunks.right != nullptr) {
+			else if (index.bx == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.right != nullptr) {
 				stage->chunks.at(index.c)->otherchunks.right->UpdateBlock(0, index.by, index.bz);
 			}
 			if (index.bx > 0) {
 				stage->chunks.at(index.c)->UpdateBlock(index.bx - 1, index.by, index.bz);
 			}
-			if (index.bx < 15) {
+			if (index.bx < (chunksize - 1)) {
 				stage->chunks.at(index.c)->UpdateBlock(index.bx + 1, index.by, index.bz);
 			}
 			// y
 			if (index.by == 0 && stage->chunks.at(index.c)->otherchunks.bottom != nullptr) {
 				std::cout << "y" << "\n";
-				stage->chunks.at(index.c)->otherchunks.bottom->UpdateBlock(index.bx, 15, index.bz);
+				stage->chunks.at(index.c)->otherchunks.bottom->UpdateBlock(index.bx, (chunksize - 1), index.bz);
 			}
-			else if (index.by == 15 && stage->chunks.at(index.c)->otherchunks.top != nullptr) {
+			else if (index.by == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.top != nullptr) {
 				stage->chunks.at(index.c)->otherchunks.top->UpdateBlock(index.bx, 0, index.bz);
 			}
 			if (index.by > 0) {
 				stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by - 1, index.bz);
 			}
-			if (index.by < 15) {
+			if (index.by < (chunksize - 1)) {
 				stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by + 1, index.bz);
 			}
 			// z
 			if (index.bz == 0 && stage->chunks.at(index.c)->otherchunks.back != nullptr) {
-				stage->chunks.at(index.c)->otherchunks.back->UpdateBlock(index.bx, index.by, 15);
+				stage->chunks.at(index.c)->otherchunks.back->UpdateBlock(index.bx, index.by, (chunksize - 1));
 			}
-			else if (index.bz == 15 && stage->chunks.at(index.c)->otherchunks.forward != nullptr) {
+			else if (index.bz == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.forward != nullptr) {
 				stage->chunks.at(index.c)->otherchunks.forward->UpdateBlock(index.bx, index.by, 0);
 			}
 			if (index.bz > 0) {
 				stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by, index.bz - 1);
 			}
-			if (index.bz < 15) {
+			if (index.bz < (chunksize - 1)) {
 				stage->chunks.at(index.c)->UpdateBlock(index.bx, index.by, index.bz + 1);
 			}
 			/*
@@ -92,12 +92,12 @@ bool Ray::Step() {
 				if (x % 16 == 0 && stage->chunks.at(index.c)->otherchunks.left != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.left->SetVertices();
 				}
-				else if (x % 16 == 15 && stage->chunks.at(index.c)->otherchunks.right != nullptr) {
+				else if (x % 16 == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.right != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.right->SetVertices();
 				}
 			}
 			else {
-				if (abs((x + 1) % 16) == 15 && stage->chunks.at(index.c)->otherchunks.left != nullptr) {
+				if (abs((x + 1) % 16) == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.left != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.left->SetVertices();
 				}
 				if (abs((x + 1) % 16) == 0 && stage->chunks.at(index.c)->otherchunks.right != nullptr) {
@@ -109,12 +109,12 @@ bool Ray::Step() {
 				if (y % 16 == 0 && stage->chunks.at(index.c)->otherchunks.bottom != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.bottom->SetVertices();
 				}
-				else if (y % 16 == 15 && stage->chunks.at(index.c)->otherchunks.top != nullptr) {
+				else if (y % 16 == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.top != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.top->SetVertices();
 				}
 			}
 			else {
-				if (abs((y + 1) % 16) == 15 && stage->chunks.at(index.c)->otherchunks.bottom != nullptr) {
+				if (abs((y + 1) % 16) == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.bottom != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.bottom->SetVertices();
 				}
 				if (abs((y + 1) % 16) == 0 && stage->chunks.at(index.c)->otherchunks.top != nullptr) {
@@ -126,12 +126,12 @@ bool Ray::Step() {
 				if (z % 16 == 0 && stage->chunks.at(index.c)->otherchunks.back != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.back->SetVertices();
 				}
-				else if (z % 16 == 15 && stage->chunks.at(index.c)->otherchunks.forward != nullptr) {
+				else if (z % 16 == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.forward != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.forward->SetVertices();
 				}
 			}
 			else {
-				if (abs((z + 1) % 16) == 15 && stage->chunks.at(index.c)->otherchunks.back != nullptr) {
+				if (abs((z + 1) % 16) == (chunksize - 1) && stage->chunks.at(index.c)->otherchunks.back != nullptr) {
 					stage->chunks.at(index.c)->otherchunks.back->SetVertices();
 				}
 				if (abs((z + 1) % 16) == 0 && stage->chunks.at(index.c)->otherchunks.forward != nullptr) {

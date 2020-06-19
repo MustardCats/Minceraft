@@ -9,20 +9,7 @@ Chunk::Chunk(Graphics* setgraphics, int setx, int sety, int setz) {
 	graphics = setgraphics;
 	bufferloaded = false;
 	firsttime = true;
-	
-	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
-		//blocks.push_back(std::vector<std::vector<Block>>());
-		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
-			//blocks.at(cx).push_back(std::vector<Block>());
-			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				factor.x = (misc::chunkSize.x * x) + cx;
-				factor.y = (misc::chunkSize.y * y) + cy;
-				factor.z = (misc::chunkSize.z * z) + cz;
-				blocks.at(cx).at(cy).at(cz) = Block(factor.x, factor.y, factor.z, 1);
-			}
-		}
-	}
-	Generate();
+	generated = false;
 }
 
 Chunk::~Chunk() {
@@ -67,11 +54,11 @@ bool Chunk::InView(Camera* camera) {
 		cos(camera->verticalAngle) * cos(camera->horizontalAngle)
 	);
 
-	distanceToPlayer = sqrt(pow(((x * 16) + 8 - camera->position[0]), 2) + pow(((y * 16) + 8 - camera->position[1]), 2) + pow(((z * 16) + 8 - camera->position[2]), 2));
+	distanceToPlayer = sqrt(pow(((x * chunksize) + (chunksize / 2) - camera->position[0]), 2) + pow(((y * chunksize) + (chunksize / 2) - camera->position[1]), 2) + pow(((z * chunksize) + (chunksize / 2) - camera->position[2]), 2));
 
 	cameraPoint = camera->position + (direction * distanceToPlayer);
 
-	pointToPoint = sqrt(pow(((x * 16) + 8 - cameraPoint[0]), 2) + pow(((y * 16) + 8 - cameraPoint[1]), 2) + pow(((z * 16) + 8 - cameraPoint[2]), 2));
+	pointToPoint = sqrt(pow(((x * 16) + (chunksize / 2) - cameraPoint[0]), 2) + pow(((y * 16) + (chunksize / 2) - cameraPoint[1]), 2) + pow(((z * chunksize) + (chunksize / 2) - cameraPoint[2]), 2));
 
 	//std::cout << "Distance: " << distanceToPlayer << " Point to Point: " << pointToPoint << "\n";
 	//std::cout << "Point: " << cameraPoint[0] << " " << cameraPoint[1] << " " << cameraPoint[2] <<
@@ -91,11 +78,11 @@ void Chunk::RemoveBlock(int bx, int by, int bz) {
 			bufferIndices.at(i).y == by &&
 			bufferIndices.at(i).z == bz) {
 			std::cout << "Removing block at " << bx << " " << by << " " << bz << " " << i << "\n";
-			// This stuff is correct
+			// Erase mesh data
 			vertexdata.erase(vertexdata.begin() + bufferIndices.at(i).vertexindex, vertexdata.begin() + bufferIndices.at(i).vertexindex + 18);
 			uvdata.erase(uvdata.begin() + bufferIndices.at(i).uvindex, uvdata.begin() + bufferIndices.at(i).uvindex + 12);
-			// Problem here!
 			bufferIndices.erase(bufferIndices.begin() + i);
+			// Update the index data
 			for (int j = i; j < bufferIndices.size(); j++) {
 				bufferIndices.at(j).vertexindex -= 18;
 				bufferIndices.at(j).uvindex -= 12;
@@ -112,37 +99,9 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 	// Erase all previous data first
 	if (!loading)
 		RemoveBlock(cx, cy, cz);
-	misc::uvcoords uvcoords[6];
+	std::array<misc::uvcoords, 6> uvcoords;
 	// Replace data
-	switch (blocks.at(cx).at(cy).at(cz).id) {
-	case 0:
-		return false;
-		break;
-	case 1:
-		uvcoords[0] = graphics->sheet1->GetUvCoords(0, 0);
-		uvcoords[1] = graphics->sheet1->GetUvCoords(0, 0);
-		uvcoords[2] = graphics->sheet1->GetUvCoords(0, 0);
-		uvcoords[3] = graphics->sheet1->GetUvCoords(0, 0);
-		uvcoords[4] = graphics->sheet1->GetUvCoords(0, 0);
-		uvcoords[5] = graphics->sheet1->GetUvCoords(0, 0);
-		break;
-	case 2:
-		uvcoords[0] = graphics->sheet1->GetUvCoords(1, 0);
-		uvcoords[1] = graphics->sheet1->GetUvCoords(1, 0);
-		uvcoords[2] = graphics->sheet1->GetUvCoords(0, 0);
-		uvcoords[3] = graphics->sheet1->GetUvCoords(4, 0);
-		uvcoords[4] = graphics->sheet1->GetUvCoords(1, 0);
-		uvcoords[5] = graphics->sheet1->GetUvCoords(1, 0);
-		break;
-	case 3:
-		uvcoords[0] = graphics->sheet1->GetUvCoords(7, 0);
-		uvcoords[1] = graphics->sheet1->GetUvCoords(7, 0);
-		uvcoords[2] = graphics->sheet1->GetUvCoords(7, 0);
-		uvcoords[3] = graphics->sheet1->GetUvCoords(7, 0);
-		uvcoords[4] = graphics->sheet1->GetUvCoords(7, 0);
-		uvcoords[5] = graphics->sheet1->GetUvCoords(7, 0);
-		break;
-	}
+	uvcoords = graphics->sheet1->GetBlockCoords(blocks.at(cx).at(cy).at(cz).id);
 	// GOOD GOOD
 	bool yes = true;
 	if (cx != 0) {
@@ -151,7 +110,7 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		}
 	}
 	else if (otherchunks.left != nullptr) {
-		if (otherchunks.left->blocks.at(15).at(cy).at(cz).id != 0) {
+		if (otherchunks.left->blocks.at((chunksize - 1)).at(cy).at(cz).id != 0) {
 			yes = false;
 		}
 	}
@@ -163,25 +122,25 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
 			vertexdata.size(), uvdata.size()));
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 		uvdata.insert(uvdata.end(), {
 			// forward
 			uvcoords[0].dl.x, uvcoords[0].dl.y,
@@ -195,7 +154,7 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 	}
 	// GOOD GOOD
 	yes = true;
-	if (cx != 15) {
+	if (cx != (chunksize - 1)) {
 		if (blocks.at(cx + 1).at(cy).at(cz).id != 0) {
 			yes = false;
 		}
@@ -212,25 +171,25 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
 			vertexdata.size(), uvdata.size()));
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 
 		uvdata.insert(uvdata.end(), {
 			uvcoords[1].dl.x, uvcoords[1].dl.y,
@@ -250,7 +209,7 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		}
 	}
 	else if (otherchunks.bottom != nullptr) {
-		if (otherchunks.bottom->blocks.at(cx).at(15).at(cz).id != 0) {
+		if (otherchunks.bottom->blocks.at(cx).at((chunksize - 1)).at(cz).id != 0) {
 			yes = false;
 		}
 	}
@@ -261,25 +220,25 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
 			vertexdata.size(), uvdata.size()));
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 
 		uvdata.insert(uvdata.end(), {
 			uvcoords[2].ul.x, uvcoords[2].ul.y,
@@ -293,7 +252,7 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 	}
 	// GOOD GOOD
 	yes = true;
-	if (cy != 15) {
+	if (cy != (chunksize - 1)) {
 		if (blocks.at(cx).at(cy + 1).at(cz).id != 0) {
 			yes = false;
 		}
@@ -310,25 +269,25 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
 			vertexdata.size(), uvdata.size()));
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
 		uvdata.insert(uvdata.end(), {
 			uvcoords[3].ul.x, uvcoords[3].ul.y,
@@ -348,7 +307,7 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		}
 	}
 	else if (otherchunks.back != nullptr) {
-		if (otherchunks.back->blocks.at(cx).at(cy).at(15).id != 0) {
+		if (otherchunks.back->blocks.at(cx).at(cy).at((chunksize - 1)).id != 0) {
 			yes = false;
 		}
 	}
@@ -359,25 +318,25 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
 			vertexdata.size(), uvdata.size()));
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) - 0.5f);
 
 		uvdata.insert(uvdata.end(), {
 			uvcoords[4].dl.x, uvcoords[4].dl.y,
@@ -391,7 +350,7 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 	}
 
 	yes = true;
-	if (cz != 15) {
+	if (cz != (chunksize - 1)) {
 		if (blocks.at(cx).at(cy).at(cz + 1).id != 0) {
 			yes = false;
 		}
@@ -408,25 +367,25 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 		bufferIndices.push_back(blockBufferIndex(cx, cy, cz,
 			vertexdata.size(), uvdata.size()));
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y - 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).x + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).y + 0.5f);
-		vertexdata.push_back(blocks.at(cx).at(cy).at(cz).z + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) - 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) - 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
+		vertexdata.push_back(((x * chunksize) + cx) + 0.5f);
+		vertexdata.push_back(((y * chunksize) + cy) + 0.5f);
+		vertexdata.push_back(((z * chunksize) + cz) + 0.5f);
 
 		uvdata.insert(uvdata.end(), {
 			uvcoords[5].dl.x, uvcoords[5].dl.y,
@@ -441,39 +400,45 @@ bool Chunk::UpdateBlock(int cx, int cy, int cz, bool loading) {
 	return true;
 }
 
-void Chunk::SetVertices() {
-	if (firsttime) {
-		cx = 0;
-		vertexdata.clear();
-		uvdata.clear();
-		bufferIndices.clear();
-		firsttime = false;
-	}
-	if (cx < misc::chunkSize.x) {
-		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
-			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				try {
-					if (blocks.at(cx).at(cy).at(cz).id != 0) {
-						UpdateBlock(cx, cy, cz, true);
+void Chunk::SetVertices(int number) {
+	// The loop allows the spreading of loading the mesh
+	for (int i = 0; i < number && cx < chunksize; i++) {
+		if (firsttime) {
+			cx = 0;
+			vertexdata.clear();
+			uvdata.clear();
+			bufferIndices.clear();
+			firsttime = false;
+		}
+		if (cx < chunksize) {
+			for (int cy = 0; cy < chunksize; cy++) {
+				for (int cz = 0; cz < chunksize; cz++) {
+					try {
+						// If 0 is included, then textures will be everywhere in the air
+						if (blocks.at(cx).at(cy).at(cz).id != 0) {
+							UpdateBlock(cx, cy, cz, true);
+						}
 					}
-				}
-				catch (const std::out_of_range & e) {
-					std::cout << cx << " " << cy << " " << cz << "\n";
-					std::cout << "Chunk: " << x << " " << y << " " << z << "\n";
-					bufferloaded = true;
-					cy = 16;
-					cz = 16;
-					cx = 16;
+					// Back when the chunk's pointers that pointed to wrong data weren't reset
+					//  when that adjacent chunk was deleted, this was used to catch errors
+					catch (const std::out_of_range& e) {
+						std::cout << cx << " " << cy << " " << cz << "\n";
+						std::cout << "Chunk: " << x << " " << y << " " << z << "\n";
+						bufferloaded = true;
+						cy = chunksize;
+						cz = chunksize;
+						cx = chunksize;
+					}
 				}
 			}
 		}
+		if (cx == chunksize - 1) {
+			cx = 0;
+			bufferloaded = true;
+			firsttime = true;
+		}
+		cx++;
 	}
-	else {
-		cx = 0;
-		bufferloaded = true;
-		firsttime = true;
-	}
-	cx++;
 }
 
 void Chunk::Render() {
@@ -483,17 +448,12 @@ void Chunk::Render() {
 		graphics->rendermode = TEXTURE;
 		glActiveTexture(GL_TEXTURE0);
 		glUniform1i(graphics->sheet1->TextureID, 0);
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
 	}
-
-	
-
-	
-	//glBindTexture(GL_TEXTURE_2D, graphics->sheet1->texture);
-	
-
+	//glBindTexture(GL_TEXTURE_2D, texture);
 	glBindBuffer(GL_ARRAY_BUFFER, graphics->vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertexdata.size(), vertexdata.data(), GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
+	glBufferDataARB(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertexdata.size(), &vertexdata[0], GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(
 		0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
 		3,                  // size
@@ -504,8 +464,7 @@ void Chunk::Render() {
 	);
 
 	glBindBuffer(GL_ARRAY_BUFFER, graphics->colorbuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * uvdata.size(), uvdata.data(), GL_STATIC_DRAW);
-	glEnableVertexAttribArray(1);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * uvdata.size(), &uvdata[0], GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(
 		1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
 		2,                                // size
@@ -519,55 +478,37 @@ void Chunk::Render() {
 	//glDeleteProgram(colorProgramID);
 	//glDeleteBuffers(1, &graphics->vertexbuffer);
 	//glDeleteBuffers(1, &graphics->colorbuffer);
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
 }
 
-void Chunk::Generate() {
-	// surface noise
-	FastNoise noise;
-	noise.SetNoiseType(FastNoise::Perlin);
-	// default is 0.01
-	noise.SetFrequency(0.02);
-	float heightmap[16][16];
-	for (int i = 0; i < 16; i++) {
-		for (int j = 0; j < 16; j++) {
-			heightmap[i][j] = noise.GetNoise((i + x * misc::chunkSize.x), (j + z * misc::chunkSize.z)) * 5;
-		}
-	}
-	// cave noise
-	noise.SetFrequency(0.05);
-	noise.SetNoiseType(FastNoise::Simplex);
-	int cavemap[16][16][16];
-	for (int bx = 0; bx < 16; bx++) {
-		for (int by = 0; by < 16; by++) {
-			for (int bz = 0; bz < 16; bz++) {
-				cavemap[bx][by][bz] = (int)(noise.GetNoise((bx + x * misc::chunkSize.x),
-					(by + y * misc::chunkSize.y),
-					(bz + z * misc::chunkSize.z)) * 2);
-				//std::cout << cavemap[bx][by][bz] << " ";
-			}
-			//std::cout << "\n";
-		}
-		//std::cout << "\n";
-	}
-	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
-		for (int cy = 0; cy < misc::chunkSize.y; cy++) {
-			for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-				if (cavemap[cx][cy][cz] < 0) {
-					blocks.at(cx).at(cy).at(cz).id = 0;
-				}
-				else {
-					if (blocks.at(cx).at(cy).at(cz).y == (int)heightmap[cx][cz])
-						blocks.at(cx).at(cy).at(cz).id = 2;
-					else if (blocks.at(cx).at(cy).at(cz).y < (int)heightmap[cx][cz] - 4)
-						blocks.at(cx).at(cy).at(cz).id = 3;
-					else if (blocks.at(cx).at(cy).at(cz).y < (int)heightmap[cx][cz])
-						blocks.at(cx).at(cy).at(cz).id = 1;
-					else
-						blocks.at(cx).at(cy).at(cz).id = 0;
+void Chunk::Generate(short number) {
+	//std::cout << "Generating noise for chunk " << x << " " << y << " " << z << "\n";
+	for (short i = 0; i < number; i++) {
+		// surface noise
+		if (ypart == 0) {
+			noise.SetNoiseType(FastNoise::Perlin);
+			// default is 0.01
+			noise.SetFrequency(0.02);
+			for (int i = 0; i < chunksize; i++) {
+				for (int j = 0; j < chunksize; j++) {
+					heightmap[i][j] = noise.GetNoise((i + x * chunksize), (j + z * chunksize)) * 30;
 				}
 			}
+		}
+		for (int cx = 0; cx < chunksize; cx++) {
+			for (int cz = 0; cz < chunksize; cz++) {
+				if (((y * chunksize) + ypart) == (int)heightmap[cx][cz])
+					blocks.at(cx).at(ypart).at(cz).id = 2;
+				else if (((y * chunksize) + ypart) < (int)heightmap[cx][cz] - 4)
+					blocks.at(cx).at(ypart).at(cz).id = 3;
+				else if (((y * chunksize) + ypart) < (int)heightmap[cx][cz])
+					blocks.at(cx).at(ypart).at(cz).id = 1;
+				else
+					blocks.at(cx).at(ypart).at(cz).id = 0;
+			}
+		}
+		ypart++;
+		if (ypart == chunksize) {
+			generated = true;
 		}
 	}
 }

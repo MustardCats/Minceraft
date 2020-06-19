@@ -26,21 +26,21 @@ bool Player::Update(float deltatime, Stage* stage) {
 	z = camera->position[2];
 
 	if (x > 0)
-		chunkpos.x = floor(x / misc::chunkSize.x);
+		chunkpos.x = floor(x / chunksize);
 	else
-		chunkpos.x = ceil(x / misc::chunkSize.x) - 1;
+		chunkpos.x = ceil(x / chunksize) - 1;
 	if (y > 0)
-		chunkpos.y = floor(y / misc::chunkSize.y);
+		chunkpos.y = floor(y / chunksize);
 	else
-		chunkpos.y = ceil(y / misc::chunkSize.y) - 1;
+		chunkpos.y = ceil(y / chunksize) - 1;
 	if (z > 0)
-		chunkpos.z = floor(z / misc::chunkSize.z);
+		chunkpos.z = floor(z / chunksize);
 	else
-		chunkpos.z = ceil(z / misc::chunkSize.z) - 1;
+		chunkpos.z = ceil(z / chunksize) - 1;
 
-	chunkblockpos.x = abs((int)x % misc::chunkSize.x);
-	chunkblockpos.y = abs((int)y % misc::chunkSize.y);
-	chunkblockpos.z = abs((int)z % misc::chunkSize.z);
+	chunkblockpos.x = abs((int)x % chunksize);
+	chunkblockpos.y = abs((int)y % chunksize);
+	chunkblockpos.z = abs((int)z % chunksize);
 	chunk = stage->FindChunk(chunkpos.x, chunkpos.y, chunkpos.z);
 
 	// toggle debug mode
@@ -272,9 +272,9 @@ void Player::MoveVertical(float deltatime) {
 int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	misc::tcoord localchunk;
 	
-	localchunk.x = ceil(tx / misc::chunkSize.x);
-	localchunk.y = ceil(ty / misc::chunkSize.y);
-	localchunk.z = ceil(tz / misc::chunkSize.z);
+	localchunk.x = ceil(tx / chunksize);
+	localchunk.y = ceil(ty / chunksize);
+	localchunk.z = ceil(tz / chunksize);
 
 	if (tx < 0)
 		localchunk.x--;
@@ -288,20 +288,16 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 		if (stage->chunks.at(i)->x == localchunk.x
 			|| stage->chunks.at(i)->y == localchunk.y
 			|| stage->chunks.at(i)->z == localchunk.z) {
-			for (int cx = 0; cx < misc::chunkSize.x; cx++) {
-				if (stage->chunks.at(i)->blocks.at(cx).at(0).at(0).x == tx) {
+			for (int cx = 0; cx < chunksize; cx++) {
+				if (((stage->chunks.at(i)->x * chunksize) + cx) == tx) {
 					localblock.x = cx;
-					for (int cy = 0; cy < misc::chunkSize.y; cy++) {
-						if (stage->chunks.at(i)->blocks.at(0).at(cy).at(0).y == ty) {
+					for (int cy = 0; cy < chunksize; cy++) {
+						if (((stage->chunks.at(i)->y * chunksize) + cy) == ty) {
 							localblock.y = cy;
-							for (int cz = 0; cz < misc::chunkSize.z; cz++) {
-								if (stage->chunks.at(i)->blocks.at(cx).at(cy).at(cz).z == tz
-									&& stage->chunks.at(i)->blocks.at(cx).at(cy).at(cz).x == tx
-									&& stage->chunks.at(i)->blocks.at(cx).at(cy).at(cz).y == ty) {
-									std::cout << "Found block " << stage->chunks.at(i)->blocks.at(cx).at(cy).at(cz).id <<
-										" at " << stage->chunks.at(i)->blocks.at(cx).at(cy).at(cz).x << " "
-										<< stage->chunks.at(i)->blocks.at(cx).at(cy).at(cz).y << " "
-										<< stage->chunks.at(i)->blocks.at(cx).at(cy).at(cz).z << "\n";
+							for (int cz = 0; cz < chunksize; cz++) {
+								if (((stage->chunks.at(i)->z * chunksize) + cz) == tz
+									&& ((stage->chunks.at(i)->x * chunksize) + cx) == tx
+									&& ((stage->chunks.at(i)->y * chunksize) + cy) == ty) {
 									block = stage->chunks.at(i)->blocks.at(cx).at(cy).at(cz);
 									return 1;
 								}
@@ -322,28 +318,28 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	// Search Main Chunk
 	misc::tcoord localchunk;
 	if (tx > 0)
-		localchunk.x = (int)tx / misc::chunkSize.x;
+		localchunk.x = (int)tx / chunksize;
 	else
-		localchunk.x = ((int)tx / misc::chunkSize.x) - 1;
+		localchunk.x = ((int)tx / chunksize) - 1;
 	if (ty > 0)
-		localchunk.y = (int)ty / misc::chunkSize.y;
+		localchunk.y = (int)ty / chunksize;
 	else
-		localchunk.y = ((int)ty / misc::chunkSize.y) - 1;
+		localchunk.y = ((int)ty / chunksize) - 1;
 	if (tz > 0)
-		localchunk.z = (int)tz / misc::chunkSize.z;
+		localchunk.z = (int)tz / chunksize;
 	else
-		localchunk.z = ((int)tz / misc::chunkSize.z) - 1;
+		localchunk.z = ((int)tz / chunksize) - 1;
 
 	misc::tcoord localpos;
 	// I used to check whether chunk is relavent and skip if not
 	// But it caused some weird collision issues, so no
-	for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+	for (int cx = 0; cx < chunksize; cx++) {
 		if (chunk->blocks.at(cx).at(0).at(0).x == tx) {
 			localpos.x = cx;
-			for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+			for (int cy = 0; cy < chunksize; cy++) {
 				if (chunk->blocks.at(localpos.x).at(cy).at(0).y == ty) {
 					localpos.y = cy;
-					for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+					for (int cz = 0; cz < chunksize; cz++) {
 						if (chunk->blocks.at(localpos.x).at(localpos.y).at(cz).z == tz) {
 							std::cout << "Main Chunk: \n";
 							std::cout << chunk->blocks.at(cx).at(cy).at(cz).id << " "
@@ -361,13 +357,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	// bottom chunk
 	if (chunk->otherchunks.bottom != nullptr) {
 		misc::tcoord localpos;
-		for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+		for (int cx = 0; cx < chunksize; cx++) {
 			if (chunk->otherchunks.bottom->blocks.at(cx).at(0).at(0).x == tx) {
 				localpos.x = cx;
-				for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+				for (int cy = 0; cy < chunksize; cy++) {
 					if (chunk->otherchunks.bottom->blocks.at(cx).at(cy).at(0).y == ty) {
 						localpos.y = cy;
-						for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+						for (int cz = 0; cz < chunksize; cz++) {
 							if (chunk->otherchunks.bottom->blocks.at(cx).at(cy).at(cz).z == tz) {
 								std::cout << "Bottom Chunk: \n";
 								std::cout << chunk->otherchunks.bottom->blocks.at(localpos.x).at(localpos.y).at(cz).id << " "
@@ -389,13 +385,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	// left chunk
 	if (chunk->otherchunks.left != nullptr) {
 		misc::tcoord localpos;
-		for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+		for (int cx = 0; cx < chunksize; cx++) {
 			if (chunk->otherchunks.left->blocks.at(cx).at(0).at(0).x == tx) {
 				localpos.x = cx;
-				for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+				for (int cy = 0; cy < chunksize; cy++) {
 					if (chunk->otherchunks.left->blocks.at(cx).at(cy).at(0).y == ty) {
 						localpos.y = cy;
-						for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+						for (int cz = 0; cz < chunksize; cz++) {
 							if (chunk->otherchunks.left->blocks.at(cx).at(cy).at(cz).z == tz) {
 								std::cout << "left " << chunk->otherchunks.left->blocks.at(cx).at(cy).at(cz).id << std::endl;
 								block = chunk->otherchunks.left->blocks.at(cx).at(cy).at(cz);
@@ -410,13 +406,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	// right chunk
 	if (chunk->otherchunks.right != nullptr) {
 		misc::tcoord localpos;
-		for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+		for (int cx = 0; cx < chunksize; cx++) {
 			if (chunk->otherchunks.right->blocks.at(cx).at(0).at(0).x == tx) {
 				localpos.x = cx;
-				for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+				for (int cy = 0; cy < chunksize; cy++) {
 					if (chunk->otherchunks.right->blocks.at(cx).at(cy).at(0).y == ty) {
 						localpos.y = cy;
-						for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+						for (int cz = 0; cz < chunksize; cz++) {
 							if (chunk->otherchunks.right->blocks.at(cx).at(cy).at(cz).z == tz) {
 								std::cout << "right " << chunk->otherchunks.right->blocks.at(cx).at(cy).at(cz).id << std::endl;
 								block = chunk->otherchunks.right->blocks.at(localpos.x).at(localpos.y).at(cz);
@@ -431,13 +427,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	// top chunk
 	if (chunk->otherchunks.top != nullptr) {
 		misc::tcoord localpos;
-		for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+		for (int cx = 0; cx < chunksize; cx++) {
 			if (chunk->otherchunks.top->blocks.at(cx).at(0).at(0).x == tx) {
 				localpos.x = cx;
-				for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+				for (int cy = 0; cy < chunksize; cy++) {
 					if (chunk->otherchunks.top->blocks.at(cx).at(cy).at(0).y == ty) {
 						localpos.y = cy;
-						for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+						for (int cz = 0; cz < chunksize; cz++) {
 							if (chunk->otherchunks.top->blocks.at(cx).at(cy).at(cz).z == tz) {
 								std::cout << "top " << chunk->otherchunks.top->blocks.at(cx).at(cy).at(cz).id << std::endl;
 								block = chunk->otherchunks.top->blocks.at(localpos.x).at(localpos.y).at(cz);
@@ -452,13 +448,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	// back chunk
 	if (chunk->otherchunks.back != nullptr) {
 		misc::tcoord localpos;
-		for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+		for (int cx = 0; cx < chunksize; cx++) {
 			if (chunk->otherchunks.back->blocks.at(cx).at(0).at(0).x == tx) {
 				localpos.x = cx;
-				for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+				for (int cy = 0; cy < chunksize; cy++) {
 					if (chunk->otherchunks.back->blocks.at(cx).at(cy).at(0).y == ty) {
 						localpos.y = cy;
-						for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+						for (int cz = 0; cz < chunksize; cz++) {
 							if (chunk->otherchunks.back->blocks.at(cx).at(cy).at(cz).z == tz) {
 								std::cout << "back " << chunk->otherchunks.back->blocks.at(cx).at(cy).at(cz).id << std::endl;
 								block = chunk->otherchunks.back->blocks.at(localpos.x).at(localpos.y).at(cz);
@@ -473,13 +469,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	// front chunk
 	if (chunk->otherchunks.forward != nullptr) {
 		misc::tcoord localpos;
-		for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+		for (int cx = 0; cx < chunksize; cx++) {
 			if (chunk->otherchunks.forward->blocks.at(cx).at(0).at(0).x == tx) {
 				localpos.x = cx;
-				for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+				for (int cy = 0; cy < chunksize; cy++) {
 					if (chunk->otherchunks.forward->blocks.at(cx).at(cy).at(0).y == ty) {
 						localpos.y = cy;
-						for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+						for (int cz = 0; cz < chunksize; cz++) {
 							if (chunk->otherchunks.forward->blocks.at(cx).at(cy).at(cz).z == tz) {
 								std::cout << "forward " << chunk->otherchunks.forward->blocks.at(cx).at(cy).at(cz).id << std::endl;
 								block = chunk->otherchunks.forward->blocks.at(localpos.x).at(localpos.y).at(cz);
@@ -496,13 +492,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	if (chunk->otherchunks.back != nullptr) {
 		if (chunk->otherchunks.back->otherchunks.left != nullptr) {
 			misc::tcoord localpos;
-			for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+			for (int cx = 0; cx < chunksize; cx++) {
 				if (chunk->otherchunks.back->otherchunks.left->blocks.at(cx).at(0).at(0).x == tx) {
 					localpos.x = cx;
-					for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+					for (int cy = 0; cy < chunksize; cy++) {
 						if (chunk->otherchunks.back->otherchunks.left->blocks.at(cx).at(cy).at(0).y == ty) {
 							localpos.y = cy;
-							for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+							for (int cz = 0; cz < chunksize; cz++) {
 								if (chunk->otherchunks.back->otherchunks.left->blocks.at(cx).at(cy).at(cz).z == tz) {
 									block = chunk->otherchunks.back->otherchunks.left->blocks.at(localpos.x).at(localpos.y).at(cz);
 									return 1;
@@ -515,13 +511,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 		}
 		if (chunk->otherchunks.back->otherchunks.right != nullptr) {
 			misc::tcoord localpos;
-			for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+			for (int cx = 0; cx < chunksize; cx++) {
 				if (chunk->otherchunks.back->otherchunks.right->blocks.at(cx).at(0).at(0).x == tx) {
 					localpos.x = cx;
-					for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+					for (int cy = 0; cy < chunksize; cy++) {
 						if (chunk->otherchunks.back->otherchunks.right->blocks.at(cx).at(cy).at(0).y == ty) {
 							localpos.y = cy;
-							for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+							for (int cz = 0; cz < chunksize; cz++) {
 								if (chunk->otherchunks.back->otherchunks.right->blocks.at(cx).at(cy).at(cz).z == tz) {
 									block = chunk->otherchunks.back->otherchunks.right->blocks.at(localpos.x).at(localpos.y).at(cz);
 									return 1;
@@ -536,13 +532,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 	if (chunk->otherchunks.forward != nullptr) {
 		if (chunk->otherchunks.forward->otherchunks.left != nullptr) {
 			misc::tcoord localpos;
-			for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+			for (int cx = 0; cx < chunksize; cx++) {
 				if (chunk->otherchunks.forward->otherchunks.left->blocks.at(cx).at(0).at(0).x == tx) {
 					localpos.x = cx;
-					for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+					for (int cy = 0; cy < chunksize; cy++) {
 						if (chunk->otherchunks.forward->otherchunks.left->blocks.at(cx).at(cy).at(0).y == ty) {
 							localpos.y = cy;
-							for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+							for (int cz = 0; cz < chunksize; cz++) {
 								if (chunk->otherchunks.forward->otherchunks.left->blocks.at(cx).at(cy).at(cz).z == tz) {
 									block = chunk->otherchunks.forward->otherchunks.left->blocks.at(localpos.x).at(localpos.y).at(cz);
 									return 1;
@@ -555,13 +551,13 @@ int Player::SearchChunks(Stage* stage, Block& block, int tx, int ty, int tz) {
 		}
 		if (chunk->otherchunks.forward->otherchunks.right != nullptr) {
 			misc::tcoord localpos;
-			for (int cx = 0; cx < misc::chunkSize.x; cx++) {
+			for (int cx = 0; cx < chunksize; cx++) {
 				if (chunk->otherchunks.forward->otherchunks.right->blocks.at(cx).at(0).at(0).x == tx) {
 					localpos.x = cx;
-					for (int cy = 0; cy < misc::chunkSize.y; cy++) {
+					for (int cy = 0; cy < chunksize; cy++) {
 						if (chunk->otherchunks.forward->otherchunks.right->blocks.at(cx).at(cy).at(0).y == ty) {
 							localpos.y = cy;
-							for (int cz = 0; cz < misc::chunkSize.z; cz++) {
+							for (int cz = 0; cz < chunksize; cz++) {
 								if (chunk->otherchunks.forward->otherchunks.right->blocks.at(cx).at(cy).at(cz).z == tz) {
 									block = chunk->otherchunks.forward->otherchunks.right->blocks.at(localpos.x).at(localpos.y).at(cz);
 									return 1;

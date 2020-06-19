@@ -66,9 +66,9 @@ bool App::DoFrame(float deltatime, short framecount) {
 	if (player->chunk != nullptr || true) {
 		for (int i = 0; i < stage->chunks.size(); i++) {
 			if (stage->chunks.at(i)->vertexdata.size() > 0) {
-				//if (stage->chunks.at(i)->InView(player->camera)) {
+				if (stage->chunks.at(i)->InView(player->camera) || true) {
 					stage->chunks.at(i)->Render();
-				//}
+				}
 			}
 		}
 	}

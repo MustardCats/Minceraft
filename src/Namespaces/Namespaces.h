@@ -6,7 +6,10 @@
 #include <cmath>
 #include <math.h>
 
+constexpr short chunksize = 32;
+
 namespace misc {
+	
 	struct floatcoord {
 		float x, y;
 	};

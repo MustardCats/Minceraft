@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <future>
 
 #include "Chunk.h"
 #include "Graphics.h"

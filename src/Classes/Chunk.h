@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <math.h>
+#include <thread>
 #include <corecrt_math_defines.h>
 
 #include "Camera.h"
@@ -20,20 +21,27 @@ public:
 	~Chunk();
 	void RemoveBlock(int x, int y, int z); // Deletes block mesh
 	bool UpdateBlock(int x, int y, int z, bool loading = false); // Updates block mesh (or makes it)
-	void SetVertices(); // Makes chunk mesh
+	void SetVertices(int number); // Makes chunk mesh
 	void Render(); // Duh
-	void Generate(); // Makes the block data
+	void Generate(short number); // Makes the block data
 	bool InView(Camera* camera); // Compares the chunk position with the camera view
 
 	int x, y, z;
 	// These are related to loading vertices
 	bool bufferloaded = false;
 	bool firsttime = true;
+	// new bools, stored in array for space
+	// 0 is generated, 1 is mesh
+	bool generated;
+	// part to generate
+	unsigned short ypart = 0;
+	FastNoise noise;
+	float heightmap[chunksize][chunksize];
 	int cx = 0;
 	// Pointer to window object
 	Graphics* graphics;
 	// Block data that isn't buffer data
-	std::array<std::array<std::array<Block, 16>, 16>, 16> blocks{};
+	std::array<std::array<std::array<Block, chunksize>, chunksize>, chunksize> blocks{};
 	std::vector<GLfloat> vertexdata;
 	std::vector<GLfloat> uvdata;
 private:

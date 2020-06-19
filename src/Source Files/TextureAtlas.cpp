@@ -5,15 +5,23 @@ void TextureAtlas::loadFromImage(const sf::Image& i) {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_MIPMAP);
-
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, i.getSize().x, i.getSize().y,
 		0, GL_RGBA, GL_UNSIGNED_BYTE, i.getPixelsPtr());
-	
+
 	glGenerateMipmap(GL_TEXTURE_2D);
+
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_MIPMAP);
+
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+		GL_NEAREST_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
 }
 
 void TextureAtlas::LoadPNG(const std::string& file) {
@@ -249,4 +257,35 @@ GLuint TextureAtlas::LoadBMP(const char* path) {
 
 	// Return the ID of the texture we just created
 	return textureID;
+}
+
+std::array<misc::uvcoords, 6> TextureAtlas::GetBlockCoords(int id) {
+	std::array<misc::uvcoords, 6> uvcoords{};
+	switch (id) {
+	case 1:
+		uvcoords[0] = GetUvCoords(0, 0);
+		uvcoords[1] = GetUvCoords(0, 0);
+		uvcoords[2] = GetUvCoords(0, 0);
+		uvcoords[3] = GetUvCoords(0, 0);
+		uvcoords[4] = GetUvCoords(0, 0);
+		uvcoords[5] = GetUvCoords(0, 0);
+		break;
+	case 2:
+		uvcoords[0] = GetUvCoords(1, 0);
+		uvcoords[1] = GetUvCoords(1, 0);
+		uvcoords[2] = GetUvCoords(0, 0);
+		uvcoords[3] = GetUvCoords(4, 0);
+		uvcoords[4] = GetUvCoords(1, 0);
+		uvcoords[5] = GetUvCoords(1, 0);
+		break;
+	case 3:
+		uvcoords[0] = GetUvCoords(7, 0);
+		uvcoords[1] = GetUvCoords(7, 0);
+		uvcoords[2] = GetUvCoords(7, 0);
+		uvcoords[3] = GetUvCoords(7, 0);
+		uvcoords[4] = GetUvCoords(7, 0);
+		uvcoords[5] = GetUvCoords(7, 0);
+		break;
+	}
+	return uvcoords;
 }

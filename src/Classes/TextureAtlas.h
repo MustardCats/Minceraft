@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include <Windows.h>
 #include <fstream>
+#include <array>
 
 #include "../Namespaces/Namespaces.h"
 
@@ -34,6 +35,7 @@ public:
 	misc::uvcoords GetUvCoords(int x, int y);
 	GLuint LoadDDS(const char* path);
 	GLuint LoadBMP(const char* path);
+	std::array<misc::uvcoords, 6> GetBlockCoords(int id);
 
 	unsigned char* header;
 

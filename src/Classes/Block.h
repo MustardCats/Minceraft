@@ -7,11 +7,10 @@
 
 class Block {
 public:
-	Block() {};
-	Block(int setx, int sety, int setz, int id) {
-		x = setx;
-		y = sety;
-		z = setz;
+	Block() {
+		this->id = 0;
+	};
+	Block(int id) {
 		this->id = id;
 	}
 
@@ -19,5 +18,5 @@ public:
 
 	}
 
-	int x, y, z, id;
+	int id;
 };
